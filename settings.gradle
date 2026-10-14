@@ -1,0 +1,6 @@
+plugins {
+    // 컴퓨터에 JDK 17이 없으면 Gradle이 알아서 내려받게 해 준다
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
+}
+
+rootProject.name = 'safe-school-road'

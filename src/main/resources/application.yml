@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: safe-school-road
+server:
+  port: 8081

@@ -1,0 +1,17 @@
+# 로컬 개발용 MySQL 8 (2단계에서 사용). 실행: docker compose up -d
+# 비밀번호는 내 컴퓨터 안에서만 쓰는 값이다. 배포(RDS)에는 다른 값을 쓴다.
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: safe_school_road
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-localdev}
+      TZ: Asia/Seoul
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
