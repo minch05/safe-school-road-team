@@ -16,16 +16,22 @@ $('read').addEventListener('click', () => {
   $('read').disabled = true; $('save').disabled = true; result = null;
   $('coordinates').textContent = '—'; $('accuracy').textContent = '—';
   $('status').textContent = '권한 선택 후 위치를 확인하고 있습니다…';
+  let settled = false;
+  let timer;
   const finish = value => {
+    if (settled) return;
+    settled = true; clearTimeout(timer);
     result = { testedAt: new Date().toISOString(), https: location.protocol === 'https:', secureContext: window.isSecureContext, ...value };
     $('status').textContent = value.message; $('read').disabled = false; $('save').disabled = false; permission();
   };
+  timer = setTimeout(() => finish({ outcome: 'no-response', message: '위치 요청에 응답이 없습니다. 권한 설정을 확인하고 페이지를 새로고침한 뒤 다시 시도하세요.' }), 20000);
   navigator.geolocation.getCurrentPosition(p => {
+    if (settled) return;
     $('coordinates').textContent = `${p.coords.latitude.toFixed(6)} / ${p.coords.longitude.toFixed(6)}`;
     $('accuracy').textContent = `약 ${Math.round(p.coords.accuracy)}m / ${new Date(p.timestamp).toLocaleTimeString('ko-KR')}`;
     finish({ outcome: 'success', accuracyMetres: p.coords.accuracy, message: '위치 읽기 성공' });
   }, e => {
-    const messages = { 1: '위치 권한이 거부되었습니다. 사이트 위치 권한을 허용한 뒤 다시 시도하세요.', 2: '현재 위치를 확인할 수 없습니다. 위치 서비스를 확인하고 다시 시도하세요.', 3: '위치 확인 시간이 초과되었습니다. 야외나 창가에서 다시 시도하세요.' };
+    const messages = { 1: '위치 권한이 거부되었습니다. 다시 눌러도 허용 팝업이 나오지 않을 수 있습니다. 아이폰 설정 → Chrome → 위치 권한을 확인한 뒤 페이지를 새로고침하고 다시 시도하세요.', 2: '현재 위치를 확인할 수 없습니다. 위치 서비스를 확인하고 다시 시도하세요.', 3: '위치 확인 시간이 초과되었습니다. 야외나 창가에서 다시 시도하세요.' };
     finish({ outcome: 'error', errorCode: e.code, message: messages[e.code] || '위치 확인에 실패했습니다. 다시 시도하세요.' });
   }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
 });
