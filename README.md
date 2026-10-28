@@ -4,7 +4,7 @@
 
 ## 개발 환경
 
-Java 17, Spring Boot 3.5.6, Gradle 8.14.3 Wrapper를 사용합니다. MySQL 8 개발용 compose 파일을 포함합니다. 초기 서버는 DB 없이 실행할 수 있습니다. 회원·공공데이터·경로·지도 모듈은 후속 개발에서 반영합니다.
+Java 21, Spring Boot 3.5.6, Gradle 8.14.3 Wrapper를 사용합니다. MySQL 8 개발용 compose 파일을 포함합니다. 초기 서버는 DB 없이 실행할 수 있습니다. 회원·공공데이터·경로·지도 모듈은 후속 개발에서 반영합니다.
 
 ## 실행
 
