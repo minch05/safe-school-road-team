@@ -1,42 +1,43 @@
-# 통학 안전·안내 서비스 팀 프로젝트
+# 초등학생 통학 안전·안내 서비스 — 팀 저장소
 
-지역문제해결 미니캡스톤 공용 저장소의 초기 프로젝트입니다.
+Java 21 · Spring Boot 3.5.6 · Gradle 8.14.3. 이 소스에는 **9주차 첫 흐름**(가입/로그인, 횡단보도 개발용 표본 적재, 지도 입력/검색, 실제 TMAP 보행 후보 1~3개)이 구현돼 있습니다. 경로 저장·위험 근거 비교·AI 안내·GPS 길 안내는 후속 기능이며, 현재 후보 카드는 안전 점수를 제공하지 않습니다.
 
-## 개발 환경
-
-Java 21, Spring Boot 3.5.6, Gradle 8.14.3 Wrapper를 사용합니다. MySQL 8 개발용 compose 파일을 포함합니다. 초기 서버는 DB 없이 실행할 수 있습니다. 회원·공공데이터·경로·지도 모듈은 후속 개발에서 반영합니다.
-
-## 실행
+## 빠른 실행
 
 ```sh
-git clone https://github.com/minch05/safe-school-road-team.git
-cd safe-school-road-team
-./gradlew bootRun
-```
-
-http://localhost:8081 에서 프로젝트 응답, `/health/setup`에서 초기 실행 상태를 확인합니다. 종료는 Ctrl+C입니다.
-
-```sh
+cp .env.example .env
+# .env의 키와 DB 연결을 본인 개발 환경에 맞게 입력; Git에 올리지 않음
 ./gradlew test bootJar
+./gradlew bootRun --args='--import-crosswalk-sample'
 ```
 
-Windows에서는 `gradlew.bat`를 사용합니다. 처음 실행에는 의존성 다운로드가 필요합니다.
+브라우저에서 `http://localhost:8081`을 엽니다. `.env`는 실행 폴더에서 선택적으로 읽습니다. `TMAP_APP_KEY`가 없으면 실제 경로를 만들지 않고 오류를 표시합니다. 지도는 네이버가 기본이고, SDK 인증 실패 또는 키 미설정 시 VWorld 보조 지도로 전환합니다. VWorld도 없으면 좌표 입력으로 API 계약만 시험할 수 있습니다. 네이버 지도/검색의 허용 도메인은 공급자 콘솔에서 확인해야 합니다.
 
-## DB 준비
+`DB_URL`을 설정하지 않으면 재시작 시 사라지는 H2 개발 DB를 사용합니다. 팀 DB 시험에는 `compose.yaml`의 MySQL 8 또는 승인된 별도 MySQL 8을 사용하고, `.env`에 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`를 설정합니다. 기존 3306 DB가 있으면 Docker를 중복 실행하지 마세요. `REMEMBER_ME_KEY`도 배포 전에 고유한 값으로 바꾸세요.
 
-개발 중에는 팀원 각자가 자기 컴퓨터의 DB를 사용합니다. `.env.example`을 `.env`로 복사하고 개발 DB 비밀번호를 설정한 뒤 `docker compose up -d`를 실행합니다. 기존 MySQL이 3306에서 실행 중이면 Docker DB를 중복 실행하지 않습니다. 초기 웹 서버는 아직 DB에 연결되지 않습니다. 데이터 모듈 추가 때 DB 연결·스키마를 함께 검증합니다.
+## 이번 주 API
 
-## 서비스 범위
+| 기능 | 메서드/URL | 확인할 것 |
+|---|---|---|
+| 보안 토큰 | `GET /api/auth/csrf` | POST의 응답 `headerName`/`token` 사용 |
+| 회원가입 | `POST /api/auth/signup` | JSON `loginId,password,nickname,age14OrOlder`; 201/400/409, 14세 미만 직접 가입 차단. 생년월일은 받지 않음 |
+| 로그인·로그아웃 | `POST /api/auth/login`, `POST /api/auth/logout` | URL form `username,password,remember-me`; 세션/CSRF |
+| 세션 | `GET /api/auth/me` | 인증 상태와 로그인 ID |
+| 장소 검색 | `GET /api/places/search?q=` | 네이버 기본, VWorld 보조; 결과가 없으면 지도/좌표로 직접 선택 |
+| 후보 | `POST /api/routes/candidates` | JSON `{start:{lat,lng},end:{lat,lng}}`; 로그인/CSRF 필요; `candidateId,distanceM,durationSec,line` |
+| 자료 현황 | `GET /api/facilities/status`, `/sample` | 개발용 중랑구 횡단보도 10건, 출처·원본 내려받은 날짜 표시 |
+| 상태 | `GET /health/setup` | 서버 기동 여부. DB 접속과 외부 API 성공을 보증하지 않음 |
 
-개발 목표는 강서·광진·동대문·중랑·관악·강북·구로·성북·종로·영등포·양천·중구의 12개 구 정식 지원입니다. 그 외 구는 이용을 막지 않고 자료 부족 안내를 표시합니다. 현재 초기 서버에는 이 기능이 아직 구현되지 않았습니다.
+TMAP 옵션 0·4·10을 요청하고 **전체 경로선이 동일할 때만** 후보를 병합합니다. 외부 응답은 `api_cache`에 한국 날짜 기준 **당일만** 보관하며 이전 날짜 데이터는 정시 삭제합니다. `api_usage`에 실제 외부 호출 시도를 기록하므로 당일 캐시 조회는 호출 수를 늘리지 않습니다. 지도선은 서비스의 영구 경로 데이터로 저장하지 않습니다. 백업/제출물에 `api_cache`를 포함하지 마세요.
 
-## 공동 작업
+## 공공자료 범위와 한계
 
-- 팀원이 clone한 뒤 빌드·실행을 확인합니다. 저장소 쓰기 권한 초대는 GitHub 아이디 확인 후 진행합니다.
-- 이슈 단위 브랜치를 만들고 Pull Request로 변경을 검토합니다.
-- GitHub Actions에서 테스트와 JAR 빌드를 수행합니다.
-- `.env`, API 키, 사용자 좌표, 기기 구독 파일, 공공데이터 원본은 커밋하지 않습니다.
+`--import-crosswalk-sample`을 지정한 경우에만 `src/main/resources/sample/crosswalks-jungnang-10.json`을 적재합니다. 원본은 서울시 교통안전시설물 횡단보도 OA-15554 / `trafficSafetyA004AInfo`, 다운로드 날짜는 2026-10-02입니다. 원본 EPSG:5186의 XCRD/YCRD를 WGS84로 변환하고 `source + original_id` 중복을 막습니다. **중랑구 개발용 표본 10건이지 서울 12개 구의 정식 적재가 아닙니다.** 다운로드 날짜는 시설 현장 확인일이 아닙니다. 신호 여부·횡단 안전도·경로 주변 전체 시설 수를 이 표본으로 판정하지 않습니다.
 
-## 사전 시험
+## 검증 상태
 
-`experiments/https-location`은 회원 DB·API 키와 분리된 HTTPS 위치 읽기 시험 페이지입니다. 실행과 실제 휴대폰 시험 방법은 해당 폴더의 README를 참고합니다.
+`./gradlew test bootJar`와 JavaScript 문법 확인을 수행합니다. 분리된 MySQL 8에서 표본 10건·2회 적재 중복 없음, 가입 201/중복 409·세션 로그인, 실제 TMAP 후보 2개, 네이버 검색 5개, 지도 인증 실패 시 VWorld 보조 지도 표시를 확인했습니다. 이 결과는 **개발용 시험**입니다. HTTPS 배포 URL, 실제 휴대폰, 전 구 공공자료, 팀원 코드 인수, 보고서 제출은 별도 확인이 필요합니다.
+
+## Git·Jira
+
+이 코드는 민채의 선행 구현입니다. 다른 팀원의 최초 구현으로 기록하지 않습니다. Jira 백로그 변경은 교수님 검수 전까지 로컬 초안으로만 둡니다. `.env`, 키, 개발 DB, TMAP 캐시 응답, 사용자 위치는 Git에 올리지 않습니다.
