@@ -1,5 +1,33 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: safe-school-road
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:safe_school_road;MODE=MySQL;DB_CLOSE_DELAY=-1}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+  sql:
+    init:
+      mode: always
 server:
-  port: 8081
+  port: ${PORT:8081}
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+app:
+  map:
+    naver-client-id: ${NAVER_MAPS_CLIENT_ID:}
+    vworld-key: ${VWORLD_API_KEY:}
+  search:
+    naver-client-id: ${NAVER_MAPS_CLIENT_ID:}
+    naver-client-secret: ${NAVER_MAPS_CLIENT_SECRET:}
+    naver-search-client-id: ${NAVER_SEARCH_CLIENT_ID:}
+    naver-search-client-secret: ${NAVER_SEARCH_CLIENT_SECRET:}
+    vworld-key: ${VWORLD_API_KEY:}
+  tmap:
+    app-key: ${TMAP_APP_KEY:}
+    daily-limit: ${TMAP_DAILY_LIMIT:950}
+  remember-me-key: ${REMEMBER_ME_KEY:local-only-change-before-deploy}
