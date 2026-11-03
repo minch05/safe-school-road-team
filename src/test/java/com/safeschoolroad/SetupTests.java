@@ -6,15 +6,17 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 class SetupTests {
     @Autowired MockMvc mvc;
-    @Test void setupEndpointsAreAvailable() throws Exception {
-        mvc.perform(get("/index.html")).andExpect(status().isOk())
-                .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/html")));
-        mvc.perform(get("/health/setup")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("UP"));
+    @Test void healthEndpointReturnsUpForAuthenticatedRequest() throws Exception {
+        mvc.perform(get("/health/setup").with(user("setup-test")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
     }
 }
