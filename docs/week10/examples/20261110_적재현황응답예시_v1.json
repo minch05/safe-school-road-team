@@ -4,6 +4,7 @@
   "request" : "GET /api/data/coverage",
   "status" : 200,
   "response" : {
+    "loaded" : true,
     "coverage" : [ {
       "district" : "강북구",
       "kind" : "CCTV",
@@ -509,7 +510,6 @@
       "source" : "전국보안등정보표준데이터",
       "downloaded" : "2026-09-18"
     } ],
-    "loaded" : true,
     "note" : "보안등 자료는 12개 구 모두 없고, 신호는 추정·미확인만 있어요."
   }
 }

@@ -18,10 +18,10 @@
       },
       "status" : 201,
       "response" : {
-        "pointCount" : 3,
         "guideSource" : "TEMPLATE",
-        "note" : "경로선은 저장하지 않았어요. 안내할 때 오늘 경로선을 다시 받아요.",
-        "id" : 1
+        "pointCount" : 3,
+        "id" : 1,
+        "note" : "경로선은 저장하지 않았어요. 안내할 때 오늘 경로선을 다시 받아요."
       }
     },
     "2_list" : {
@@ -33,7 +33,7 @@
           "name" : "망우초 가는 길",
           "candidateId" : "candidate-0",
           "pointCount" : 3,
-          "createdAt" : "2026-11-04 07:06:19.89099"
+          "createdAt" : "2026-11-04 07:08:47.550494"
         } ]
       }
     },
@@ -53,7 +53,7 @@
         },
         "candidateId" : "candidate-0",
         "searchOption" : 0,
-        "createdAt" : "2026-11-04 07:06:19.89099",
+        "createdAt" : "2026-11-04 07:08:47.550494",
         "points" : [ {
           "seq" : 1,
           "kind" : "EMERGENCY_BELL",
@@ -100,10 +100,10 @@
       "request" : "GET /api/routes/1/line",
       "status" : 200,
       "response" : {
-        "routeId" : 1,
-        "durationSec" : 330,
-        "distanceM" : 420,
         "note" : "오늘 받은 경로선이에요. 저장한 안내 지점과 함께 보여 주고, 경로선은 저장하지 않아요.",
+        "distanceM" : 420,
+        "durationSec" : 330,
+        "routeId" : 1,
         "line" : [ {
           "lat" : 37.59867,
           "lng" : 127.1
