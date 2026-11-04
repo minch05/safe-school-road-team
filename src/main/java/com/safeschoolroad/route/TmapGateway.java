@@ -63,6 +63,7 @@ public class TmapGateway {
         try {
             JsonNode root = mapper.readTree(body);
             List<Point> line = new ArrayList<>();
+            List<Turn> turns = new ArrayList<>();
             int distance = 0, duration = 0;
             for (JsonNode feature : root.path("features")) {
                 JsonNode geometry = feature.path("geometry"), properties = feature.path("properties");
@@ -74,17 +75,33 @@ public class TmapGateway {
                         if (line.isEmpty() || !line.get(line.size()-1).equals(point)) line.add(point);
                     }
                 }
+                if ("Point".equals(geometry.path("type").asText()) && properties.has("turnType")) {
+                    JsonNode c = geometry.path("coordinates");
+                    Point at = new Point(c.path(1).asDouble(Double.NaN), c.path(0).asDouble(Double.NaN));
+                    if (at.inSupportedArea()) turns.add(new Turn(at, properties.path("turnType").asInt()));
+                }
                 if (properties.has("totalDistance")) {
                     distance = properties.path("totalDistance").asInt();
                     duration = properties.path("totalTime").asInt();
                 }
             }
             if (line.size() < 2 || distance <= 0 || duration <= 0) throw new IllegalArgumentException("불완전한 경로 응답");
-            return new RouteOption(option, line, distance, duration);
+            return new RouteOption(option, line, distance, duration, List.copyOf(turns));
         } catch (Exception ex) { throw new ProviderUnavailable("경로 API 응답 형식이 올바르지 않습니다."); }
     }
 
-    public record RouteOption(int option, List<Point> line, int distanceM, int durationSec) { }
+    /** turns: TMAP이 알려 준 건넘·꺾음 위치. line과 함께 당일에만 쓰고 저장하지 않는다. */
+    public record RouteOption(int option, List<Point> line, int distanceM, int durationSec, List<Turn> turns) {
+        public RouteOption(int option, List<Point> line, int distanceM, int durationSec) {
+            this(option, line, distanceM, durationSec, List.of());
+        }
+    }
+
+    /** TMAP 보행자 turnType: 12 좌회전, 13 우회전, 14 유턴, 16~19 8·10·2·4시 방향, 211~217 횡단보도 건넘. */
+    public record Turn(Point at, int type) {
+        public boolean isCrossing() { return type >= 211 && type <= 217; }
+        public boolean isTurn() { return type == 12 || type == 13 || type == 14 || (type >= 16 && type <= 19); }
+    }
     public static class ProviderUnavailable extends RuntimeException {
         public ProviderUnavailable(String message) { super(message); }
     }
