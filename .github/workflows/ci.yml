@@ -19,8 +19,8 @@ jobs:
           path: build/libs/*.jar
       # 10주차 산출물 응답 예시(근거 분석·저장 경로). 실제 적재 공공자료 + TMAP 모의 경로선, 외부 호출 없음
       - run: ./gradlew --no-daemon test --tests '*ResponseExampleTests' -Dexamples.out=build/examples
-      - run: for f in build/examples/*.json; do echo "=====FILE $(basename "$f")"; gzip -c "$f" | base64 -w0; echo; done
+      - run: for f in build/examples/*; do echo "=====FILE $(basename "$f")"; gzip -c "$f" | base64 -w0; echo; done
       - uses: actions/upload-artifact@v7
         with:
           name: response-examples
-          path: build/examples/*.json
+          path: build/examples/*

@@ -79,6 +79,11 @@ class ResponseExampleTests {
             jdbc.update("INSERT INTO member(login_id,password_hash,nickname,age_14_or_older) VALUES (?,?,?,?)", login, "x", "예시 보호자", true);
         Path out = Path.of(System.getProperty("examples.out"));
         Files.createDirectories(out);
+        // 구별 건수 결과표(scripts/district_counts.py --db-csv)에 넣을 실제 DB 행 수
+        StringBuilder csv = new StringBuilder("district,kind,rows\n");
+        jdbc.query("SELECT district, kind, COUNT(*) FROM facility GROUP BY district, kind ORDER BY district, kind",
+                rs -> { csv.append(rs.getString(1)).append(',').append(rs.getString(2)).append(',').append(rs.getInt(3)).append('\n'); });
+        Files.writeString(out.resolve("20261110_DB구별건수_v1.csv"), csv, StandardCharsets.UTF_8);
 
         JsonNode evidence = call(post("/api/routes/evidence").with(user("example_parent")).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON).content(REQUEST), 200);
