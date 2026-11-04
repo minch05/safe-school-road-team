@@ -1,0 +1,515 @@
+{
+  "_example" : "응답 예시 (GET /api/data/coverage). 공공자료는 실제 적재 파일(2026-11-04 생성), TMAP 경로선은 서울망우초등학교 주변 모의 응답이라 실제 길과 다를 수 있어요.",
+  "_howToRegenerate" : "./gradlew test --tests '*ResponseExampleTests' -Dexamples.out=docs/week10/examples",
+  "request" : "GET /api/data/coverage",
+  "status" : 200,
+  "response" : {
+    "loaded" : true,
+    "coverage" : [ {
+      "district" : "강북구",
+      "kind" : "CCTV",
+      "rows" : 4595,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "강북구",
+      "kind" : "CROSSWALK",
+      "rows" : 1521,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "강북구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1485,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "강북구",
+      "kind" : "SCHOOL",
+      "rows" : 34,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "강북구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 35,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "강북구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "강서구",
+      "kind" : "CCTV",
+      "rows" : 2135,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "강서구",
+      "kind" : "CROSSWALK",
+      "rows" : 2576,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "강서구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1222,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "강서구",
+      "kind" : "SCHOOL",
+      "rows" : 80,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "강서구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 88,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "강서구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "관악구",
+      "kind" : "CCTV",
+      "rows" : 2106,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "관악구",
+      "kind" : "CROSSWALK",
+      "rows" : 1220,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "관악구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1279,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "관악구",
+      "kind" : "SCHOOL",
+      "rows" : 55,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "관악구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 61,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "관악구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "광진구",
+      "kind" : "CCTV",
+      "rows" : 1304,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "광진구",
+      "kind" : "CROSSWALK",
+      "rows" : 1348,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "광진구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1119,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "광진구",
+      "kind" : "SCHOOL",
+      "rows" : 42,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "광진구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 64,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "광진구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "구로구",
+      "kind" : "CCTV",
+      "rows" : 2132,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "구로구",
+      "kind" : "CROSSWALK",
+      "rows" : 2413,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "구로구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1434,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "구로구",
+      "kind" : "SCHOOL",
+      "rows" : 54,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "구로구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 56,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "구로구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "동대문구",
+      "kind" : "CCTV",
+      "rows" : 1367,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "동대문구",
+      "kind" : "CROSSWALK",
+      "rows" : 1872,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "동대문구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1223,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "동대문구",
+      "kind" : "SCHOOL",
+      "rows" : 47,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "동대문구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 76,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "동대문구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "성북구",
+      "kind" : "CCTV",
+      "rows" : 1704,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "성북구",
+      "kind" : "CROSSWALK",
+      "rows" : 2459,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "성북구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1512,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "성북구",
+      "kind" : "SCHOOL",
+      "rows" : 60,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "성북구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 94,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "성북구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "양천구",
+      "kind" : "CCTV",
+      "rows" : 4795,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "양천구",
+      "kind" : "CROSSWALK",
+      "rows" : 2045,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "양천구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 976,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "양천구",
+      "kind" : "SCHOOL",
+      "rows" : 63,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "양천구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 59,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "양천구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "영등포구",
+      "kind" : "CCTV",
+      "rows" : 5446,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "영등포구",
+      "kind" : "CROSSWALK",
+      "rows" : 3269,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "영등포구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1271,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "영등포구",
+      "kind" : "SCHOOL",
+      "rows" : 44,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "영등포구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 64,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "영등포구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "종로구",
+      "kind" : "CCTV",
+      "rows" : 1223,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "종로구",
+      "kind" : "CROSSWALK",
+      "rows" : 1630,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "종로구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 89,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "종로구",
+      "kind" : "SCHOOL",
+      "rows" : 36,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "종로구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 37,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "종로구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "중구",
+      "kind" : "CCTV",
+      "rows" : 1190,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "중구",
+      "kind" : "CROSSWALK",
+      "rows" : 1878,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "중구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 767,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "중구",
+      "kind" : "SCHOOL",
+      "rows" : 31,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "중구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 36,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "중구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "중랑구",
+      "kind" : "CCTV",
+      "rows" : 2054,
+      "status" : "LOADED",
+      "source" : "서울특별시 CCTV정보",
+      "downloaded" : "2026-09-16"
+    }, {
+      "district" : "중랑구",
+      "kind" : "CROSSWALK",
+      "rows" : 1985,
+      "status" : "LOADED",
+      "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+      "downloaded" : "2026-10-02"
+    }, {
+      "district" : "중랑구",
+      "kind" : "EMERGENCY_BELL",
+      "rows" : 1566,
+      "status" : "LOADED",
+      "source" : "안전비상벨위치정보",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "중랑구",
+      "kind" : "SCHOOL",
+      "rows" : 47,
+      "status" : "LOADED",
+      "source" : "전국초중등학교위치표준데이터",
+      "downloaded" : "2026-10-09"
+    }, {
+      "district" : "중랑구",
+      "kind" : "SCHOOL_ZONE",
+      "rows" : 41,
+      "status" : "LOADED",
+      "source" : "전국어린이보호구역표준데이터",
+      "downloaded" : "2026-09-18"
+    }, {
+      "district" : "중랑구",
+      "kind" : "SECURITY_LIGHT",
+      "rows" : 0,
+      "status" : "NO_DATA",
+      "source" : "전국보안등정보표준데이터",
+      "downloaded" : "2026-09-18"
+    } ],
+    "note" : "보안등 자료는 12개 구 모두 없고, 신호는 추정·미확인만 있어요."
+  }
+}

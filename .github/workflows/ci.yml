@@ -17,3 +17,15 @@ jobs:
         with:
           name: application
           path: build/libs/*.jar
+      # 가입·로그인·저장 거부 흐름을 실제 실행 파일로 확인 (TMAP 키 없음 → 근거 분석 503에서 멈춤)
+      - run: |
+          java -jar $(ls build/libs/*.jar | grep -v plain) > app.log 2>&1 &
+          for i in $(seq 60); do curl -sf http://localhost:8081/health/setup && break; sleep 2; done
+          scripts/api_smoke.sh http://localhost:8081 || (tail -50 app.log; exit 1)
+      # 10주차 산출물 응답 예시(근거 분석·저장 경로). 실제 적재 공공자료 + TMAP 모의 경로선, 외부 호출 없음
+      - run: ./gradlew --no-daemon test --tests '*ResponseExampleTests' -Dexamples.out=build/examples
+      - run: for f in build/examples/*; do echo "=====FILE $(basename "$f")"; gzip -c "$f" | base64 -w0; echo; done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: response-examples
+          path: build/examples/*

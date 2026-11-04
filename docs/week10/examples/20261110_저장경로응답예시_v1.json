@@ -1,0 +1,149 @@
+{
+  "_example" : "응답 예시 (저장 경로 확정·목록·상세·오늘 경로선·거부 예시). 공공자료는 실제 적재 파일(2026-11-04 생성), TMAP 경로선은 서울망우초등학교 주변 모의 응답이라 실제 길과 다를 수 있어요.",
+  "_howToRegenerate" : "./gradlew test --tests '*ResponseExampleTests' -Dexamples.out=docs/week10/examples",
+  "calls" : {
+    "1_save" : {
+      "request" : "POST /api/routes",
+      "requestBody" : {
+        "start" : {
+          "lat" : 37.59867,
+          "lng" : 127.1
+        },
+        "end" : {
+          "lat" : 37.5998,
+          "lng" : 127.1036
+        },
+        "candidateId" : "candidate-0",
+        "name" : "망우초 가는 길"
+      },
+      "status" : 201,
+      "response" : {
+        "guideSource" : "TEMPLATE",
+        "pointCount" : 3,
+        "id" : 1,
+        "note" : "경로선은 저장하지 않았어요. 안내할 때 오늘 경로선을 다시 받아요."
+      }
+    },
+    "2_list" : {
+      "request" : "GET /api/routes",
+      "status" : 200,
+      "response" : {
+        "routes" : [ {
+          "id" : 1,
+          "name" : "망우초 가는 길",
+          "candidateId" : "candidate-0",
+          "pointCount" : 3,
+          "createdAt" : "2026-11-04 07:08:47.550494"
+        } ]
+      }
+    },
+    "3_detail" : {
+      "request" : "GET /api/routes/1",
+      "status" : 200,
+      "response" : {
+        "id" : 1,
+        "name" : "망우초 가는 길",
+        "start" : {
+          "lat" : 37.59867,
+          "lng" : 127.1
+        },
+        "end" : {
+          "lat" : 37.5998,
+          "lng" : 127.1036
+        },
+        "candidateId" : "candidate-0",
+        "searchOption" : 0,
+        "createdAt" : "2026-11-04 07:08:47.550494",
+        "points" : [ {
+          "seq" : 1,
+          "kind" : "EMERGENCY_BELL",
+          "name" : "",
+          "reason" : "GAP",
+          "lat" : 37.5985107,
+          "lng" : 127.101059,
+          "alongM" : 93,
+          "signalStatus" : null,
+          "source" : "안전비상벨위치정보",
+          "originalId" : "202530600000900435",
+          "guideText" : "안전비상벨이 있는 곳을 지나요. 위험할 때 누르는 벨이에요.",
+          "guideSource" : "TEMPLATE"
+        }, {
+          "seq" : 2,
+          "kind" : "CROSSWALK",
+          "name" : "",
+          "reason" : "CROSSING",
+          "lat" : 37.5986733,
+          "lng" : 127.1027495,
+          "alongM" : 243,
+          "signalStatus" : "UNKNOWN",
+          "source" : "서울시 교통안전시설물 횡단보도 OA-15554",
+          "originalId" : "06-0000026667",
+          "guideText" : "횡단보도예요. 멈춰서 신호와 양쪽을 확인하고 건너요.",
+          "guideSource" : "TEMPLATE"
+        }, {
+          "seq" : 3,
+          "kind" : "SCHOOL",
+          "name" : "서울망우초등학교",
+          "reason" : "TURN",
+          "lat" : 37.598737,
+          "lng" : 127.1038418,
+          "alongM" : 325,
+          "signalStatus" : null,
+          "source" : "전국초중등학교위치표준데이터",
+          "originalId" : "B000001863",
+          "guideText" : "서울망우초등학교 쪽에서 길을 꺾어요. 지도의 선을 보고 따라가요. 거의 다 왔어요!",
+          "guideSource" : "TEMPLATE"
+        } ]
+      }
+    },
+    "4_todayLine" : {
+      "request" : "GET /api/routes/1/line",
+      "status" : 200,
+      "response" : {
+        "note" : "오늘 받은 경로선이에요. 저장한 안내 지점과 함께 보여 주고, 경로선은 저장하지 않아요.",
+        "distanceM" : 420,
+        "durationSec" : 330,
+        "routeId" : 1,
+        "line" : [ {
+          "lat" : 37.59867,
+          "lng" : 127.1
+        }, {
+          "lat" : 37.59867,
+          "lng" : 127.10275
+        }, {
+          "lat" : 37.59867,
+          "lng" : 127.1036
+        }, {
+          "lat" : 37.5998,
+          "lng" : 127.1036
+        } ]
+      }
+    },
+    "5_otherUser" : {
+      "request" : "GET /api/routes/1 (다른 회원)",
+      "status" : 404,
+      "response" : {
+        "error" : "경로를 찾을 수 없습니다."
+      }
+    },
+    "6_forgedCandidate" : {
+      "request" : "POST /api/routes (꾸민 후보)",
+      "requestBody" : {
+        "start" : {
+          "lat" : 37.59867,
+          "lng" : 127.1
+        },
+        "end" : {
+          "lat" : 37.5998,
+          "lng" : 127.1036
+        },
+        "candidateId" : "candidate-99",
+        "name" : "망우초 가는 길"
+      },
+      "status" : 400,
+      "response" : {
+        "error" : "선택한 후보가 올바르지 않습니다."
+      }
+    }
+  }
+}

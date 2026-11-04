@@ -18,4 +18,12 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
-tasks.named('test') { useJUnitPlatform() }
+tasks.named('test') {
+    useJUnitPlatform()
+    // 응답 예시 만들기(ResponseExampleTests)는 -Dexamples.out=폴더 를 줄 때만 돈다
+    def examplesOut = System.getProperty('examples.out')
+    if (examplesOut) {
+        systemProperty 'examples.out', file(examplesOut).absolutePath
+        outputs.upToDateWhen { false }
+    }
+}

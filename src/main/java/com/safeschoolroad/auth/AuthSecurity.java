@@ -35,7 +35,7 @@ public class AuthSecurity {
     @Bean SecurityFilterChain securityFilterChain(HttpSecurity http, JdbcTokenRepositoryImpl tokens,
             UserDetailsService users, @Value("${app.remember-me-key}") String rememberKey) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index.html", "/login.html", "/signup.html", "/css/**", "/js/**", "/health/**",
+                .requestMatchers("/", "/index.html", "/login.html", "/signup.html", "/guide.html", "/css/**", "/js/**", "/health/**",
                         "/api/auth/signup", "/api/auth/csrf", "/api/auth/me", "/api/map-config", "/api/places/search",
                         "/api/facilities/**").permitAll()
                 .anyRequest().authenticated());
