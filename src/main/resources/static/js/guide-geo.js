@@ -54,20 +54,26 @@
       return { state: 'WEAK_SIGNAL', message: '위치가 정확하지 않아요. 잠시 기다리거나 지도를 보고 걸어요.' };
     const remaining = points.filter(pt => !passed.has(pt.seq));
     if (!remaining.length) return { state: 'DONE', message: '안내 지점을 모두 지났어요.' };
-    const next = remaining[0];
-    const toNextM = distanceM(position, next);
     let offRoute = false, alongM = null;
     if (prepared) {
       const loc = locate(prepared, position);
       alongM = loc.alongM;
       offRoute = loc.distanceM > OFF_ROUTE_M;
     }
-    const newlyArrived = remaining.filter(pt => distanceM(position, pt) <= ARRIVE_M).map(pt => pt.seq);
+    // 20m 안의 지점 중 가장 뒤 지점에 도착한 것으로 본다. 그 앞에서 놓친 지점은 지난 것으로 함께 넘긴다
+    const near = remaining.filter(pt => distanceM(position, pt) <= ARRIVE_M);
+    const arrived = near.length ? near[near.length - 1] : null;
+    const newlyArrived = arrived ? remaining.filter(pt => pt.seq <= arrived.seq).map(pt => pt.seq) : [];
+    const ahead = remaining.filter(pt => !newlyArrived.includes(pt.seq)
+      && (alongM == null || pt.alongM == null || pt.alongM >= alongM - ARRIVE_M));
+    const next = ahead[0] || null;
+    const toNextM = next ? distanceM(position, next) : 0;
     return {
-      state: offRoute ? 'OFF_ROUTE' : newlyArrived.length ? 'ARRIVED' : 'WALKING',
+      state: offRoute ? 'OFF_ROUTE' : arrived ? 'ARRIVED' : 'WALKING',
       next, toNextM: Math.round(toNextM), alongM: alongM == null ? null : Math.round(alongM), newlyArrived,
       message: offRoute ? '경로를 벗어났어요. 멈춰서 지도의 선을 확인해요.'
-        : newlyArrived.length ? next.guideText
+        : arrived ? arrived.guideText
+        : !next ? '거의 다 왔어요. 도착 지점을 확인해요.'
         : toNextM < 10 ? '다음 안내 지점이 곧 나와요.' : `다음 안내까지 약 ${roundForChild(toNextM)}m`,
     };
   }

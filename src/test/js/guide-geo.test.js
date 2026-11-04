@@ -29,6 +29,17 @@ test('지점 20m 안이면 도착, 안내문을 보여 준다', () => {
   assert.match(r.message, /멈춰/);
 });
 
+test('앞 지점을 놓치고 뒤 지점에 도착하면 앞 지점도 지난 것으로 넘기고 도착 지점 안내문을 보여 준다', () => {
+  const r = G.step(points, new Set(), { lat: 37.59867, lng: 127.10275 }, G.prepareLine(line), 8);
+  assert.equal(r.state, 'ARRIVED');
+  assert.deepEqual(r.newlyArrived, [1]);
+  const three = [{ seq: 0, lat: 37.59867, lng: 127.1010, alongM: 88, guideText: '비상벨' }, ...points];
+  const r2 = G.step(three, new Set(), { lat: 37.59867, lng: 127.10275 }, G.prepareLine(line), 8);
+  assert.deepEqual(r2.newlyArrived, [0, 1]);
+  assert.match(r2.message, /횡단보도/);
+  assert.equal(r2.next.seq, 2);
+});
+
 test('경로에서 40m 넘게 벗어나면 OFF_ROUTE', () => {
   const r = G.step(points, new Set(), { lat: 37.5992, lng: 127.1010 }, G.prepareLine(line), 10);
   assert.equal(r.state, 'OFF_ROUTE');
