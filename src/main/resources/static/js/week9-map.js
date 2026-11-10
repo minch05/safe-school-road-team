@@ -7,7 +7,10 @@ const sampleParam=new URLSearchParams(location.search).get('sample');
 const sampleMode=SAMPLE_NAMES.includes(sampleParam)?sampleParam:null;
 const COLORS=['#096c46','#c47a00','#a34081'];
 let candidateList=[], cardEls=[], selectedCandidateId=null, lastLineClick=0;
-if(sampleMode)byId('sample-banner').hidden=false;
+if(sampleMode){
+  byId('sample-banner').hidden=false;
+  byId('route-search').textContent='예시 후보 보기';
+}
 function mapClicked(p){if(Date.now()-lastLineClick<300)return;setPoint(selected,p);}
 const status = message => byId('message').textContent = message;
 function point(which){ return {lat:Number(byId(`${which}-lat`).value),lng:Number(byId(`${which}-lng`).value)}; }
@@ -19,7 +22,7 @@ function drawFacilities(){
   for(const marker of facilityMarkers){if(provider==='naver')marker.setMap(null);else map.removeLayer(marker);}
   facilityMarkers=[];
   for(const site of facilitySample){
-    const title=`횡단보도 개발용 표본 ${site.originalId} · 원본 내려받은 날짜 ${site.sourceDownloaded}`;
+    const title=`중랑구 횡단보도 미리보기 ${site.originalId} · 원본 내려받은 날짜 ${site.sourceDownloaded}`;
     if(provider==='naver'){
       facilityMarkers.push(new naver.maps.Marker({map,position:new naver.maps.LatLng(site.lat,site.lng),title}));
     }else facilityMarkers.push(L.circleMarker([site.lat,site.lng],{radius:5,color:'#a35219',fillOpacity:.8})

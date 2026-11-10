@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.userdetails.User;
@@ -38,6 +39,8 @@ public class AuthSecurity {
                 .requestMatchers("/", "/index.html", "/login.html", "/signup.html", "/guide.html", "/css/**", "/js/**", "/health/**",
                         "/api/auth/signup", "/api/auth/csrf", "/api/auth/me", "/api/map-config", "/api/places/search",
                         "/api/facilities/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/samples/candidates-0.json", "/samples/candidates-1.json",
+                        "/samples/candidates-2.json", "/samples/candidates-3.json", "/samples/candidates-partial.json").permitAll()
                 .anyRequest().authenticated());
         http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
         http.exceptionHandling(errors -> errors.authenticationEntryPoint((request, response, ex) ->
