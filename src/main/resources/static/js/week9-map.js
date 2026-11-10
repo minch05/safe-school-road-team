@@ -178,6 +178,11 @@ byId('route-search').onclick=async()=>{
     }else{
       const token=await csrf();
       response=await fetch('/api/routes/candidates',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',[token.headerName]:token.token},body:JSON.stringify({start,end})});
+      if (response.status === 401) {
+        status('로그인이 필요합니다.');
+        location.assign('/login.html');
+        return;
+      }
       data=await response.json();
     }
     const failed=sampleMode?(Boolean(data.error)||Number(data.httpStatus)>=400):!response.ok;
