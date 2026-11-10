@@ -35,6 +35,15 @@ class AuthFlowTests {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test void publicExamplesWorkWithoutLoginWhileLiveCandidatesStayProtected() throws Exception {
+        for (String sample : java.util.List.of("0", "1", "2", "3", "partial")) {
+            mvc.perform(get("/samples/candidates-" + sample + ".json"))
+                    .andExpect(status().isOk());
+        }
+        mvc.perform(post("/api/routes/candidates").with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
     @Test void sessionLoginAndLogoutProtectRouteApi() throws Exception {
         String login = "user" + UUID.randomUUID().toString().substring(0, 8);
         jdbc.update("INSERT INTO member(login_id,password_hash,nickname,age_14_or_older) VALUES (?,?,?,?)",
