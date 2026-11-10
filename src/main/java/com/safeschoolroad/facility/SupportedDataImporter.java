@@ -32,7 +32,9 @@ public class SupportedDataImporter implements CommandLineRunner {
         this.mapper = mapper;
     }
 
-    @Override public void run(String... args) throws Exception {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void run(String... args) throws Exception {
         if (List.of(args).contains("--import-supported-data")) {
             Result r = importAll();
             System.out.println("지원 지역 공공자료 적재: 시설 " + r.facilities() + "건, 사고 다발 지역 " + r.riskAreas()
@@ -42,7 +44,8 @@ public class SupportedDataImporter implements CommandLineRunner {
 
     public record Result(int facilities, int riskAreas) { }
 
-    @Transactional public Result importAll() throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    public Result importAll() throws Exception {
         JsonNode root;
         try (InputStream raw = getClass().getResourceAsStream(RESOURCE)) {
             if (raw == null) throw new IllegalStateException("지원 지역 자료 파일이 없습니다: " + RESOURCE);

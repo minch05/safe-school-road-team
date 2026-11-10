@@ -10,12 +10,15 @@ import static org.junit.jupiter.api.Assertions.*;
 class CrosswalkSampleTests {
     @Autowired CrosswalkSampleImporter importer;
     @Autowired JdbcTemplate jdbc;
+    @Autowired FacilityApi api;
     @Test void importsReviewedTenRecordsIdempotentlyAndConvertsCoordinates() throws Exception {
         assertEquals(10, importer.importSample());
         assertEquals(10, importer.importSample());
         Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM facility WHERE source=?", Integer.class,
                 CrosswalkSampleImporter.SOURCE);
         assertEquals(10, count);
+        assertEquals(10, api.status().get("crosswalkCount"));
+        assertTrue(api.status().get("coverage").toString().contains("중랑구 개발용 표본 10건"));
         Double lat = jdbc.queryForObject("SELECT MIN(lat) FROM facility WHERE source=?", Double.class,
                 CrosswalkSampleImporter.SOURCE);
         Double lng = jdbc.queryForObject("SELECT MIN(lng) FROM facility WHERE source=?", Double.class,
