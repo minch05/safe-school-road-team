@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('홈')}"></head>
+<body>
+<!-- K-01 아이 홈 (보호자와 연동된 사람). 경로를 누르면 바로 길 안내 -->
+<main class="page kid-page">
+    <header class="bar">
+        <h1>안전한 통학길</h1>
+        <a class="icon" th:href="@{/settings}" aria-label="설정"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#settings"></use></svg></a>
+    </header>
+    <section class="welcome home-welcome"><div><h2 th:text="${greeting}">어디 가?</h2><p>갈 곳을 골라 주세요.</p></div><img th:src="@{/icons/road-friend.svg}" width="64" height="64" alt="" class="road-friend"></section>
+    <div class="body">
+        <div class="section-heading"><h2>오늘 가는 곳</h2><a class="text-action" th:href="@{/routes/new}">＋ 길 추가</a></div>
+        <a class="card kid" th:each="r, s : ${routes}" th:href="@{/routes/{id}/navigate(id=${r.id})}">
+            <div class="emoji" aria-hidden="true"><svg class="family-icon" focusable="false"><use th:attr="href=${r.endName.contains('학교')} ? '/icons/family.svg#school' : (${r.endName.contains('집')} ? '/icons/family.svg#home' : '/icons/family.svg#route')"></use></svg></div>
+            <div class="grow"><h3 th:text="${r.name}">학교 가기</h3>
+            <span class="meta" th:text="${r.startName} + ' → ' + ${r.endName}">집 → 학교</span></div>
+            <span class="kid-go">출발 <span aria-hidden="true">→</span></span>
+        </a>
+        <div class="card empty" th:if="${#lists.isEmpty(routes)}"><span class="big-emoji" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#map"></use></svg></span><b>아직 경로가 없어요</b>보호자에게 등록을 부탁하거나 직접 추가해요.<a class="btn primary empty-action" th:href="@{/routes/new}">길 추가하기</a></div>
+
+        <details class="kid-map-preview"><summary>지도로 위치 확인하기</summary><th:block th:replace="~{fragments/homemap :: map}"></th:block></details>
+        <div class="row" style="justify-content:space-between">
+            <a class="link" th:href="@{/guide}">사용 방법</a>
+            <a class="link" th:href="@{/map}">안전지도 보기</a>
+        </div>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<th:block th:replace="~{fragments/homemap :: script}"></th:block>
+</body>
+</html>

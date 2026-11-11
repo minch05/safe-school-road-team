@@ -1,0 +1,28 @@
+[Unit]
+Description=Safe School Road
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=safeschoolroad
+Group=safeschoolroad
+WorkingDirectory=/opt/safe-school-road
+EnvironmentFile=/etc/safe-school-road/app.env
+Environment=SPRING_PROFILES_ACTIVE=prod
+Environment=TZ=Asia/Seoul
+Environment=PUBLIC_DATA_BACKUP_DIR=/var/lib/safe-school-road/public-data-backups
+StateDirectory=safe-school-road
+LogsDirectory=safe-school-road
+ExecStart=/usr/bin/java -XX:MaxRAMPercentage=70 -jar /opt/safe-school-road/app.jar
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=143
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

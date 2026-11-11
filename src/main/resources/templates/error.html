@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('안내')}"></head>
+<body>
+<!-- 화면 오류(없는 주소·권한 없음·서버 오류). 기본 Whitelabel 화면 대신 쉬운 말로 안내하고, 오류 내용(스택 등)은 보여 주지 않는다 -->
+<main class="page">
+    <div class="body">
+        <div class="card empty" role="alert">
+            <span class="big-emoji" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#map"></use></svg></span>
+            <th:block th:switch="${status}">
+                <th:block th:case="404"><b>찾는 화면이 없어요</b>주소가 바뀌었거나 지워진 화면이에요.</th:block>
+                <th:block th:case="400"><b>요청을 처리할 수 없어요</b>주소나 입력이 올바르지 않아요. 이전 화면에서 다시 시도해 주세요.</th:block>
+                <th:block th:case="403"><b>볼 수 없는 화면이에요</b>이 계정으로는 볼 수 없는 정보예요. 다른 계정으로 로그인했는지 확인해 주세요.</th:block>
+                <th:block th:case="*"><b>잠시 문제가 생겼어요</b>잠시 뒤 다시 시도해 주세요. 방금 한 일은 저장되지 않았을 수 있어요.</th:block>
+            </th:block>
+            <a class="btn primary empty-action" th:href="@{/}">홈으로</a>
+            <button class="btn empty-action" type="button" onclick="history.back()">이전 화면으로</button>
+        </div>
+    </div>
+</main>
+</body>
+</html>

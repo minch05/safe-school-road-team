@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('홈')}"></head>
+<body>
+<!-- R-01 내 경로 홈 (개인: 보호자와 연동되지 않은 사람) -->
+<main class="page personal-page">
+    <header class="bar">
+        <h1>안전한 통학길</h1>
+        <a class="icon" th:href="@{/guide}" aria-label="사용 방법"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#help"></use></svg></a>
+        <a class="icon" th:href="@{/settings}" aria-label="설정"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#settings"></use></svg></a>
+    </header>
+    <section class="welcome home-welcome"><div><h2 th:text="${nickname} + '님, 어디 가요?'">어디 가요?</h2><p>지도를 보고, 오늘의 길을 골라요.</p></div><img th:src="@{/icons/road-friend.svg}" width="64" height="64" alt="" class="road-friend"></section>
+    <th:block th:replace="~{fragments/homemap :: map}"></th:block>
+    <div class="body">
+        <div class="section-heading"><h2>내 통학길</h2><a class="text-action" th:href="@{/routes/new}">＋ 길 등록</a></div>
+        <div class="card" th:each="r : ${routes}">
+            <a th:href="@{/routes/{id}(id=${r.id})}" style="color:inherit;text-decoration:none;display:grid;gap:4px">
+                <div class="row">
+                    <h3 class="grow" th:text="${r.name}">학교 가기</h3>
+                    <span class="tag warn" th:if="${r.changeStatus.name() == 'CHANGED'}">⚠ 길이 달라졌을 수 있음</span>
+                </div>
+                <span class="meta" th:text="${r.startName} + ' → ' + ${r.endName}">집 → 학교</span>
+                <span class="hint" th:text="'핵심 지점 ' + ${#lists.size(r.points)} + '곳'">지점</span>
+            </a>
+            <div class="card-actions">
+                <a class="btn primary" th:href="@{/routes/{id}/navigate(id=${r.id})}"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#route"></use></svg> 길 안내 시작</a>
+                <a class="btn" th:href="@{/routes/{id}(id=${r.id})}" style="width:auto">자세히</a>
+            </div>
+        </div>
+
+        <div class="card empty" th:if="${#lists.isEmpty(routes)}">
+            <span class="big-emoji"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#map"></use></svg></span>
+            <b>아직 등록한 경로가 없어요</b>
+            출발지와 도착지를 정하면 길 주변의 시설과 주의할 곳을 비교해 드려요.
+            <a class="btn primary empty-action" th:href="@{/routes/new}">첫 통학길 등록하기</a>
+        </div>
+
+
+    </div>
+<th:block th:replace="~{fragments/layout :: bottom-nav('home')}"></th:block>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<th:block th:replace="~{fragments/homemap :: script}"></th:block>
+<script th:inline="javascript">
+    // 저장한 경로의 출발지·도착지를 홈 지도에 보여 준다 (우리가 저장한 좌표만, 경로선은 그리지 않음)
+    const ends = /*[[${routeEnds}]]*/ [];
+    if (ends.length && window.homeMap) {
+        const pts = [];
+        ends.forEach(e => {
+            App.flagMarker([e.startLat, e.startLng], '🏠').addTo(homeMap);
+            App.flagMarker([e.endLat, e.endLng], '🚩').bindTooltip(e.name).addTo(homeMap);
+            pts.push([e.startLat, e.startLng], [e.endLat, e.endLng]);
+        });
+        if (!window.homeMapFollowing) homeMap.fitBounds(pts, { padding: [40, 40], maxZoom: 16 });
+    }
+    const flash = /*[[${toast}]]*/ null;
+    if (flash) App.toast(flash);
+</script>
+</body>
+</html>

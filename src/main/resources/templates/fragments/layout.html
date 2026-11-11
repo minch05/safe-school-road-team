@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- 모든 화면의 <head> 공통 부분. 사용: <head th:replace="~{fragments/layout :: common-head('제목')}"> -->
+    <th:block th:fragment="common-head(title)">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <title th:text="${title} + ' · 안전한 통학길'">안전한 통학길</title>
+        <meta name="theme-color" content="#087d73">
+        <!-- 홈 화면 설치(PWA) -->
+        <link rel="manifest" th:href="@{/manifest.webmanifest}">
+        <link rel="icon" th:href="@{/icons/icon-192.png}" type="image/png">
+        <link rel="apple-touch-icon" th:href="@{/icons/icon-192.png}">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="안전한 통학길">
+        <!-- JS 의 POST 요청에 위조 방지 값(CSRF)을 붙이기 위해 -->
+        <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+        <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+        <meta name="vworld-key" th:content="${vworldApiKey}">
+        <meta name="vapid-key" th:content="${vapidPublicKey}">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+        <link rel="stylesheet" th:href="@{/css/app.css}">
+        <link rel="stylesheet" th:href="@{/css/family.css}">
+    </th:block>
+</head>
+<body>
+<nav th:fragment="bottom-nav(active)" class="bottom-nav" aria-label="주요 메뉴">
+    <a th:href="@{/}" th:classappend="${active == 'home'} ? 'active'" th:attr="aria-current=${active == 'home'} ? 'page' : null"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#home"></use></svg>홈</a>
+    <a th:href="@{/map}" th:classappend="${active == 'map'} ? 'active'" th:attr="aria-current=${active == 'map'} ? 'page' : null"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#map"></use></svg>안전지도</a>
+    <a th:href="@{/places}" th:classappend="${active == 'places'} ? 'active'" th:attr="aria-current=${active == 'places'} ? 'page' : null"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#pin"></use></svg>내 장소</a>
+    <a th:href="@{/settings}" th:classappend="${active == 'settings'} ? 'active'" th:attr="aria-current=${active == 'settings'} ? 'page' : null"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#settings"></use></svg>설정</a>
+</nav>
+<!-- 공통 스크립트. 사용: <th:block th:replace="~{fragments/layout :: scripts}"></th:block> -->
+<th:block th:fragment="scripts">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script th:if="${naverMapsClientId != null and !#strings.isEmpty(naverMapsClientId)}" th:src="@{https://oapi.map.naver.com/openapi/v3/maps.js(ncpKeyId=${naverMapsClientId})}"></script>
+    <script th:src="@{/js/map-kit.js}"></script>
+    <script th:src="@{/js/app.js}"></script>
+</th:block>
+</body>
+</html>

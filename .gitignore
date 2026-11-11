@@ -29,3 +29,4 @@ experiments/iphone-push/cloudflared
 
 # 파이썬 실행 찌꺼기
 __pycache__/
+.venv/

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('아이 계정 만들기')}"></head>
+<body>
+<!-- P-02 아이 계정 만들기 -->
+<main class="page">
+    <header class="bar"><a class="icon" th:href="${fromSettings} ? @{/settings} : @{/}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>아이 계정 만들기</h1></header>
+    <form class="body" method="post" th:action="@{/children}">
+        <input type="hidden" name="from" value="settings" th:if="${fromSettings}">
+        <p style="margin:0">아이는 직접 가입할 수 없어요. 여기서 만든 계정은 자동으로 연동돼요.</p>
+        <div class="box err" th:if="${error}" th:text="${error}">오류</div>
+        <label class="f">아이디
+            <span class="row">
+                <input class="grow" type="text" name="username" id="username" th:value="${username}" maxlength="20"
+                       autocapitalize="none" autocomplete="off" required>
+                <button class="btn soft" type="button" id="checkUsername" style="width:auto;white-space:nowrap">중복 확인</button>
+            </span>
+            <span class="hint">영문 소문자와 숫자, 4~20자</span>
+            <span id="usernameResult" aria-live="polite"></span>
+        </label>
+        <label class="f">처음 비밀번호
+            <input type="password" name="password" minlength="8" autocomplete="new-password" required>
+            <span class="hint">8자 이상. 아이 비밀번호는 나중에 보호자가 다시 정할 수 있어요.</span>
+        </label>
+        <label class="f">별명
+            <input type="text" name="nickname" th:value="${nickname}" maxlength="10" placeholder="예: 하늘" required>
+            <span class="hint">실명이 아니어도 돼요.</span>
+        </label>
+        <label class="check"><input type="checkbox" name="consent" value="true" th:checked="${consent}"> 보호자로서 이 계정을 만들고 개인정보 처리에 동의합니다</label>
+        <div class="box soft" style="font-size:13px">
+            <b>받는 정보</b> 아이디, 비밀번호, 별명, 저장한 장소·경로 지점, 출발·도착 시각<br>
+            <b>받지 않는 정보</b> 실명, 전화번호, 이메일, 주소, 생년월일, 실시간 위치
+        </div>
+        <button class="btn primary big" type="submit">아이 계정 만들기</button>
+    </form>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+    const input = document.getElementById('username'), result = document.getElementById('usernameResult');
+    document.getElementById('checkUsername').onclick = async () => {
+        try {
+            const d = await App.api('/signup/check-username?username=' + encodeURIComponent(input.value.trim()));
+            result.className = d.available ? 'okmsg' : 'error'; result.textContent = d.message;
+        } catch (e) { result.className = 'error'; result.textContent = e.message; }
+    };
+    input.oninput = () => { result.textContent = ''; };
+</script>
+</body>
+</html>

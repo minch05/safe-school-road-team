@@ -1,17 +1,26 @@
-# 로컬 개발용 MySQL 8 (2단계에서 사용). 실행: docker compose up -d
-# 비밀번호는 내 컴퓨터 안에서만 쓰는 값이다. 배포(RDS)에는 다른 값을 쓴다.
+# 프로젝트 전용 MySQL. 기존 설치 MySQL(3306)과 분리한다.
+# 실행: docker compose up -d --wait
+name: safe-school-road-should-could
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:8.4
     environment:
       MYSQL_DATABASE: safe_school_road
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-localdev}
+      MYSQL_USER: ${DB_USERNAME:?Set DB_USERNAME in .env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       TZ: Asia/Seoul
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3308:3306"
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=TCP -h 127.0.0.1 -u\"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
 volumes:
   mysql-data:

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('메인')}"></head>
+<body>
+<main class="page landing-page discover-page">
+    <header class="bar brand-bar"><a class="brand-name" th:href="@{/}"><svg class="ui-icon" aria-hidden="true"><use href="/icons/ui.svg#route"></use></svg>안전한 통학길</a><a class="account-link" th:href="@{/login}">로그인</a></header>
+    <div class="body landing-body">
+        <div class="box warn" id="inAppNotice" hidden><b>사파리나 크롬으로 열어 주세요</b><p>앱 안 브라우저에서는 설치와 알림이 안 될 수 있어요. 메뉴에서 다른 브라우저로 열어 주세요.</p></div>
+        <div class="box ok" th:if="${param.withdrawn}">탈퇴했어요. 그동안 써 주셔서 고마워요.</div>
+        <section class="landing-map-card" aria-label="서울 안전정보 지도">
+            <div class="map-card-heading"><b>우리 동네 지도</b><a class="text-action" th:href="@{/map}">크게 보기 ↗</a></div>
+            <form id="mapSearch" class="map-search"><label class="sr-only" for="mapQuery">학교나 동네 검색</label><input id="mapQuery" type="search" placeholder="어디로 갈까요? 학교·장소 검색" maxlength="100" enterkeyhint="search"><button type="button" class="search-clear" id="mapClear" aria-label="검색어 지우기" hidden>×</button><button class="btn primary" type="submit">찾기</button></form>
+            <div id="mapResults" class="list searchres" hidden></div>
+            <div id="safetyMap" class="map"></div><div class="map-selection" id="mapSelection" hidden><div><small>선택한 장소</small><b id="mapSelectedName"></b></div><a class="btn soft" th:href="@{/explore}" id="mapDirections">여기로 길찾기</a></div>
+            <details class="landing-layers"><summary>횡단보도·CCTV·비상벨 보기 <span>＋</span></summary><div id="safetyLayers"></div></details>
+        </section>
+        <section class="discover-dock">        <section class="welcome"><div><span class="eyebrow">학교 가는 길의 작은 친구</span><h1>오늘도, 한 걸음씩!</h1><p>길을 살펴보고, 편하게 준비해요.</p></div><img th:src="@{/icons/road-friend.svg}" width="88" height="88" alt="" class="road-friend"></section>
+        <nav class="quick-actions" aria-label="시작하기">
+            <a class="quick-card mint" th:href="@{/explore}"><span class="quick-icon"><svg class="family-icon" aria-hidden="true"><use href="/icons/family.svg#route"></use></svg></span><span><b>길찾기</b><small>시간·주의할 곳 비교</small></span><span aria-hidden="true">›</span></a>
+            <a class="quick-card cream" th:href="@{/map}"><span class="quick-icon"><svg class="family-icon" aria-hidden="true"><use href="/icons/family.svg#bag"></use></svg></span><span><b>주변 살펴보기</b><small>시설·사고 정보 지도</small></span><span aria-hidden="true">›</span></a>
+        </nav>
+        <p class="landing-note">가입 없이 하루 3번 길 비교 · 위치 추적 정보는 보내지 않아요</p>
+        <button type="button" class="text-action intro-action" id="introBtn">처음이라면? 사용 방법 보기</button>
+        </section>
+    </div>
+</main>
+<template id="introTpl"><h2>통학길, 이렇게 써요</h2><th:block th:replace="~{fragments/guide :: content}"></th:block><button type="button" class="btn primary" id="introClose">알겠어요</button></template>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/map-data.js}"></script><script th:src="@{/js/safety-map.js}"></script>
+<script>
+if(App.isInAppBrowser())document.getElementById('inAppNotice').hidden=false;
+document.getElementById('introBtn').onclick=()=>{const m=App.modal(document.getElementById('introTpl').innerHTML);m.querySelector('#introClose').onclick=App.closeModal;};
+</script>
+</body></html>

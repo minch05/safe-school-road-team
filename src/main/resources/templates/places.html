@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('내 장소')}"></head>
+<body>
+<!-- R-07 내 장소 -->
+<main class="page">
+    <header class="bar"><a class="icon" th:href="@{/settings}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>내 장소</h1></header>
+    <div class="body">
+        <div class="hello"><h2>자주 가는 곳</h2><p>저장한 장소를 다음 경로에서 바로 골라요.</p></div>
+        <p class="hint">장소는 경로를 등록할 때 저장돼요. 여기서는 이름을 바꾸거나 지울 수 있어요. 지워도 이미 저장한 경로는 그대로예요.</p>
+        <div class="list places-list">
+            <div th:each="p : ${places}">
+                <span><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#pin"></use></svg> <span th:text="${p.name}">집</span></span>
+                <span class="place-actions">
+                    <button type="button" class="link" th:attr="data-rename=${p.id},data-name=${p.name}">이름 변경</button>
+                    <form method="post" th:action="@{/places/{id}/delete(id=${p.id})}" style="display:inline" class="delForm">
+                        <button type="submit" class="link danger-text">삭제</button>
+                    </form>
+                </span>
+            </div>
+            <div class="empty" th:if="${#lists.isEmpty(places)}"><span><span class="big-emoji" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#pin"></use></svg></span><b>아직 저장한 장소가 없어요</b><span class="hint">경로 등록에서 출발지나 도착지를 내 장소로 저장해요.</span></span></div>
+        </div>
+        <div class="spacer"></div><div class="actionbar"><a class="btn primary big" th:href="@{/routes/new}">＋ 경로 등록</a></div>
+        <form method="post" id="renameForm" hidden><input type="hidden" name="name">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"></form>
+    </div>
+<th:block th:replace="~{fragments/layout :: bottom-nav('places')}"></th:block>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:inline="javascript">
+    document.querySelectorAll('[data-rename]').forEach(b => b.onclick = () => {
+        const m = App.modal(`<h2>장소 이름 바꾸기</h2><input type="text" id="v" aria-label="새 장소 이름" maxlength="30">
+            <div class="row"><button type="button" class="btn grow" onclick="App.closeModal()">취소</button><button type="button" class="btn primary grow" id="ok">저장</button></div>`);
+        m.querySelector('#v').value = b.dataset.name;
+        m.querySelector('#ok').onclick = () => {
+            const f = document.getElementById('renameForm');
+            f.action = '/places/' + b.dataset.rename + '/rename';
+            f.elements.namedItem('name').value = m.querySelector('#v').value; f.submit();
+        };
+    });
+    document.querySelectorAll('.delForm').forEach(f => f.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (await App.confirmBox('이 장소를 지울까요?', '이미 저장한 경로는 그대로예요.', '삭제', true)) f.submit();
+    }));
+    const flash = /*[[${toast}]]*/ null;
+    if (flash) App.toast(flash);
+</script>
+</body>
+</html>

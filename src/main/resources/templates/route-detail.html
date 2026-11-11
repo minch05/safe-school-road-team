@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head(${route.name})}"></head>
+<body>
+<!-- R-05 경로 상세 -->
+<main class="page">
+    <header class="bar">
+        <a class="icon" th:href="${backUrl}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a>
+        <h1 th:text="${route.name}">경로</h1>
+    </header>
+    <div class="body">
+        <div class="box info" th:if="${ownerName}"><b th:text="${ownerName}">아이</b>의 경로예요</div>
+        <div class="box ok" th:if="${param.saved}">✓ 경로를 저장했어요. 이제 길 안내를 시작할 수 있어요.</div>
+
+        <!-- 경로 달라짐 (FR-22). 아이 화면에서는 띄우지 않는다 -->
+        <div class="box warn" id="changeBox" hidden th:unless="${kidView}" role="alert">
+            <b>⚠ 경로가 달라졌을 수 있어요</b>
+            <p>방금 다시 받아 온 길이 저장할 때와 달라요. 저장한 지점과 오늘 조회한 경로선을 비교한 결과이며, 공사·통제 여부를 확인한 것은 아니에요.</p>
+            <a class="btn primary" style="margin-top:10px"
+               th:href="@{/routes/new(replace=${route.id}, ownerId=${ownerName != null ? route.owner.id : null})}">같은 출발지·도착지로 다시 등록하기</a>
+        </div>
+
+        <div class="meta" style="font-size:15px;color:var(--sub)">
+            <b style="color:var(--ink)" th:text="${route.startName}">출발</b> → <b style="color:var(--ink)" th:text="${route.endName}">도착</b>
+        </div>
+        <div class="stats">
+            <div class="stat"><b id="statDist">…</b><small>거리</small></div>
+            <div class="stat"><b id="statTime">…</b><small>걸어서</small></div>
+            <div class="stat"><b th:text="${#lists.size(route.points)} + '곳'">0곳</b><small>번호 지점</small></div>
+        </div>
+        <div id="routeMap" class="map tall"></div>
+        <p class="hint" id="lineInfo"><span class="spinner"></span> 오늘의 길을 받아 오는 중…</p>
+        <p class="error" id="lineError" role="alert"></p>
+
+        <section th:unless="${kidView}" aria-label="경로 달라짐 확인">
+            <button type="button" class="btn soft" id="checkRoute" disabled>경로 달라짐 확인</button>
+            <p class="hint" id="checkStatus" role="status" aria-live="polite">누르면 저장한 지점과 오늘의 길을 비교해요. 당일 조회는 캐시를 사용할 수 있어요.</p>
+        </section>
+        <div class="section-title">지점마다 아이가 보는 안내</div>
+        <ol class="steps" id="steps"></ol>
+        <div class="card empty" th:if="${#lists.isEmpty(route.points)}">
+            <span class="big-emoji"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#route"></use></svg></span>이 길에는 번호로 표시할 공공데이터 시설이 없어요. 지도의 선과 내 위치를 보고 걸어요.
+        </div>
+        <p class="hint" th:unless="${kidView}">
+            안내문: <span th:text="${route.guideSource == 'AI'} ? 'AI가 만들고 지점 목록과 대조했어요' : '정해진 문장이에요'">-</span>
+            · 말투 <span th:text="${route.tone.label}">저학년</span> · "고치기"로 직접 바꿀 수 있어요
+        </p>
+
+        <form method="post" th:action="@{/routes/{id}/delete(id=${route.id})}" id="deleteForm" th:unless="${kidView}">
+            <button type="submit" class="btn ghost danger-text">이 경로 삭제</button>
+        </form>
+        <p class="hint" style="text-align:center;margin-top:-8px" th:unless="${kidView}">경로를 바꾸려면 삭제하고 다시 등록해요.</p>
+
+        <div class="actionbar">
+            <a class="btn primary big" th:href="@{/routes/{id}/navigate(id=${route.id})}"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#route"></use></svg> 길 안내 시작</a>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:inline="javascript">
+    const ROUTE = {
+        id: /*[[${route.id}]]*/ 0,
+        option: /*[[${route.searchOption}]]*/ 0,
+        start: [ /*[[${route.startLat}]]*/ 0, /*[[${route.startLng}]]*/ 0],
+        end: [ /*[[${route.endLat}]]*/ 0, /*[[${route.endLng}]]*/ 0],
+        editable: /*[[${!kidView}]]*/ true,
+    };
+    const OPTION_LABEL = { 0: '기본', 4: '대로우선', 10: '최단' };
+    const map = App.makeMap('routeMap');
+    const layer = MapKit.layerGroup().addTo(map);
+    let points = [];
+
+    function render(line) {
+        layer.clearLayers();
+        if (line) {
+            MapKit.polyline(line, { color: '#fff', weight: 10, opacity: .9 }).addTo(layer);
+            MapKit.polyline(line, { color: '#2459d6', weight: 6, opacity: .95 }).addTo(layer);
+        }
+        points.forEach(p => App.numberMarker(p).bindPopup(`<b>${p.seq}. ${App.esc(p.kindLabel)}</b><br>${App.esc(p.text)}`).addTo(layer));
+        App.flagMarker(ROUTE.start, '🏠').addTo(layer);
+        App.flagMarker(ROUTE.end, '🚩').addTo(layer);
+        const all = (line || []).concat(points.map(p => [p.lat, p.lng])).concat([ROUTE.start, ROUTE.end]);
+        map.fitBounds(all, { padding: [30, 30] });
+        document.getElementById('steps').innerHTML = App.stepsHTML(points, { editable: ROUTE.editable });
+    }
+
+    function showLine(d) {
+        points = d.points;
+        document.getElementById('statDist').textContent = App.km(d.distance);
+        document.getElementById('statTime').textContent = App.minutes(d.time);
+        document.getElementById('lineInfo').textContent = `${OPTION_LABEL[ROUTE.option]} 길 · 저장한 횡단보도를 지나는 오늘의 길이에요`;
+        document.getElementById('lineError').textContent = '';
+        render(d.line);
+    }
+
+    // 최초 조회가 끝나기 전에 확인 요청을 겹쳐 보내지 않는다.
+    // 경로선 조회는 변경 판정 기록을 갱신하지 않는다.
+    App.api(`/api/routes/${ROUTE.id}/line`).then(showLine).catch(e => {
+        document.getElementById('lineInfo').textContent = '';
+        document.getElementById('statDist').textContent = '–';
+        document.getElementById('statTime').textContent = '–';
+        document.getElementById('lineError').textContent = e.message + ' (저장한 지점만 보여 줘요)';
+        // 선을 못 받아도 저장된 지점은 보여 준다
+        return App.api(`/api/routes/${ROUTE.id}/points`).then(d => { points = d; render(null); }).catch(() => render(null));
+    }).finally(() => {
+        const button = document.getElementById('checkRoute');
+        if (button) button.disabled = false;
+    });
+
+    document.getElementById('checkRoute')?.addEventListener('click', async e => {
+        const button = e.currentTarget;
+        if (button.disabled) return;
+        const status = document.getElementById('checkStatus');
+        const box = document.getElementById('changeBox');
+        button.disabled = true;
+        box.hidden = true;
+        status.textContent = '저장한 지점과 오늘의 길을 비교하는 중…';
+        try {
+            const d = await App.api(`/api/routes/${ROUTE.id}/check`, { method: 'POST' });
+            if (!d || typeof d.changed !== 'boolean' || !Array.isArray(d.line) || d.line.length < 2
+                    || !Array.isArray(d.points) || !Number.isFinite(d.distance) || !Number.isFinite(d.time)) {
+                throw new Error('확인 응답이 올바르지 않아요. 다시 시도해 주세요.');
+            }
+            showLine(d);
+            box.hidden = !d.changed;
+            status.textContent = d.changed
+                ? '저장한 지점에서 멀어지거나 우회하는 길이 확인됐어요. 안내를 확인해 주세요.'
+                : '비교 기준에 해당하는 차이를 찾지 못했어요. 현장의 안전이나 공사 여부를 보장하지는 않아요.';
+        } catch (err) {
+            status.textContent = '경로 달라짐을 확인하지 못했어요. ' + err.message;
+        } finally {
+            button.disabled = false;
+        }
+    });
+
+    // 안내문 고치기 (FR-10)
+    document.getElementById('steps').addEventListener('click', e => {
+        const seq = e.target.dataset?.edit;
+        if (!seq) return;
+        const p = points.find(x => x.seq === +seq);
+        const m = App.modal(`<h2>${p.seq}번 안내문 고치기</h2>
+            <p class="hint" style="margin:0">아이가 이 지점에 가까워지면 보는 문장이에요. 가게 이름이나 실제 주소는 쓰지 말아 주세요.</p>
+            ${p.kind === 'CROSSWALK' ? '<p class="hint">횡단보도 안내에는 멈추기, 신호 확인, 양쪽 살피기를 넣어 주세요.</p>' : ''}
+            <textarea id="guideEdit" rows="3" maxlength="200" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit"></textarea>
+            <div class="row"><button type="button" class="btn grow" id="cancelEdit">취소</button>
+            <button type="button" class="btn primary grow" id="saveEdit">저장</button></div>`);
+        m.querySelector('#guideEdit').value = p.text;
+        m.querySelector('#cancelEdit').onclick = App.closeModal;
+        m.querySelector('#saveEdit').onclick = async () => {
+            const text = m.querySelector('#guideEdit').value.trim();
+            if (!text) return;
+            try {
+                await App.api(`/api/routes/${ROUTE.id}/points/${p.seq}/guide`, { method: 'POST', body: { text } });
+                p.text = text;
+                document.getElementById('steps').innerHTML = App.stepsHTML(points, { editable: ROUTE.editable });
+                App.closeModal(); App.toast('안내문을 고쳤어요');
+            } catch (err) { App.toast(err.message); }
+        };
+    });
+
+    // 삭제 확인
+    document.getElementById('deleteForm')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (await App.confirmBox(`'${/*[[${route.name}]]*/ ''}' 경로를 삭제할까요?`, '저장한 지점과 안내문이 함께 지워져요.', '삭제', true)) e.target.submit();
+    });
+</script>
+</body>
+</html>
