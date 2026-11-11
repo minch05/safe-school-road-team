@@ -3,7 +3,7 @@ package com.safeschoolroad.guide;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-final class GuideTextValidator {
+public final class GuideTextValidator {
     private static final Pattern UNVERIFIED = Pattern.compile(
             "왼쪽|오른쪽|왼편|오른편|좌회전|우회전|좌측|우측|동쪽|서쪽|남쪽|북쪽|유턴|직진|[0-9]|[<>]|https?://|초록\\s*불|파란\\s*불|녹색\\s*불"
             + "|신호(?:등)?(?:이|가|를)\\s*(?:바뀌|기다)|지켜\\s*[주줘]|보호해\\s*주|안전(?:한|해|하|점수)|가장\\s*안전|더\\s*안전"
@@ -25,7 +25,7 @@ final class GuideTextValidator {
 
     private GuideTextValidator() { }
 
-    static boolean valid(GuideWriter.Input point, String text) {
+    public static boolean valid(GuideWriter.Input point, String text) {
         String clean = text.strip();
         if (clean.isEmpty() || clean.length() > 120 || clean.contains("\n") || (!clean.endsWith("요.")
                 && !clean.endsWith("요!") && !clean.endsWith("요"))) return false;

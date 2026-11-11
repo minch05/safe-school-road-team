@@ -23,21 +23,28 @@ public class GuideWriter {
     /** Deliberately excludes coordinates, original IDs, route names and account information. */
     public record Input(int seq, String kind, String name, String reason, String signalStatus,
                         boolean isLast, String templateText) { }
-    public record Result(List<String> texts, String source) { }
+    public enum Tone { LOWER, UPPER }
+    public record Result(List<String> texts, String source, boolean attempted) { }
 
     public Result write(List<KeyPoint> points) {
+        return write(points, Tone.LOWER);
+    }
+
+    public Result write(List<KeyPoint> points, Tone tone) {
         List<Input> inputs = new ArrayList<>();
         Map<String, Integer> seen = new HashMap<>();
         for (int i = 0; i < points.size(); i++) {
             KeyPoint point = points.get(i);
             int nth = seen.merge(point.kind() + "|" + point.reason(), 1, Integer::sum) - 1;
             inputs.add(new Input(point.seq(), point.kind(), point.name(), point.reason(), point.signalStatus(),
-                    i == points.size() - 1, TemplateGuide.sentence(point, nth, i == points.size() - 1)));
+                    i == points.size() - 1, template(point, nth, i == points.size() - 1, tone)));
         }
-        Result fallback = new Result(inputs.stream().map(Input::templateText).toList(), TemplateGuide.SOURCE);
-        if (!client.configured() || inputs.isEmpty() || inputs.size() > 30) return fallback;
+        boolean attempted = client.configured() && !inputs.isEmpty() && inputs.size() <= 30;
+        Result fallback = new Result(inputs.stream().map(Input::templateText).toList(), TemplateGuide.SOURCE, attempted);
+        if (!attempted) return fallback;
         try {
-            JsonNode root = mapper.readTree(client.generate(List.copyOf(inputs)));
+            List<Input> immutable = List.copyOf(inputs);
+            JsonNode root = mapper.readTree(tone == Tone.UPPER ? client.generate(immutable, tone) : client.generate(immutable));
             JsonNode replies = root.path("points");
             if (!replies.isArray() || replies.size() != inputs.size()) return fallback;
             List<String> texts = new ArrayList<>();
@@ -50,10 +57,16 @@ public class GuideWriter {
                         || !text.isTextual() || !GuideTextValidator.valid(input, text.asText())) return fallback;
                 texts.add(text.asText().strip());
             }
-            return new Result(List.copyOf(texts), "AI");
+            return new Result(List.copyOf(texts), "AI", true);
         } catch (Exception failure) {
             // Provider exceptions can contain credentials or request bodies. Never expose them.
             return fallback;
         }
+    }
+    private static String template(KeyPoint point, int occurrence, boolean last, Tone tone) {
+        if (tone == Tone.UPPER && "CROSSWALK".equals(point.kind())) {
+            return "횡단보도 앞에서 멈춰 신호와 양쪽을 확인한 뒤 건너요.";
+        }
+        return TemplateGuide.sentence(point, occurrence, last);
     }
 }

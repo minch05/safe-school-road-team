@@ -24,11 +24,16 @@
     <p id="line-note"></p>
     <button id="start" type="button">안내 시작</button>
     <button id="stop" type="button" hidden>안내 멈추기</button>
+    <button id="check-route" type="button">경로 달라짐 확인</button>
+    <p id="change-result" role="status"></p>
+    <a id="replace-route" href="/">같은 출발지·도착지로 다시 등록</a>
+    <button id="delete-route" type="button">이 경로 삭제</button>
     <button id="back" type="button">목록으로</button>
     <p class="note">신호는 확정 자료가 없어요. 횡단보도에서는 꼭 멈춰서 실제 신호와 양쪽을 확인해요.</p>
   </section>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/js/guide-geo.js"></script>
+<script src="/js/team-api.js"></script>
 <script src="/js/guide.js"></script>
 </html>

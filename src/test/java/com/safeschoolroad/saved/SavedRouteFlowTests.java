@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.safeschoolroad.route.Point;
 import com.safeschoolroad.route.TmapGateway;
 import java.util.List;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,6 +59,7 @@ class SavedRouteFlowTests {
     @Autowired ObjectMapper mapper;
 
     @BeforeEach void data() {
+        jdbc.update("DELETE FROM guide_log");
         jdbc.update("DELETE FROM saved_route_point");
         jdbc.update("DELETE FROM saved_route");
         jdbc.update("DELETE FROM member WHERE login_id IN ('routeowner','otheruser')");
@@ -161,6 +164,90 @@ class SavedRouteFlowTests {
         JsonNode detail = json(mvc.perform(get("/api/routes/" + saved.path("id").asLong()).with(user("routeowner")))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
         for (JsonNode point : detail.path("points")) assertEquals("TEMPLATE", point.path("guideSource").asText());
+    }
+
+    @Test void preservesOldRouteOnInvalidReplacementAndRejectsAnotherOwner() throws Exception {
+        String body = BODY.formatted("candidate-0", "기존 경로");
+        long oldId = json(mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").asLong();
+        String replaced = body.replace("기존 경로", "새 경로").replace("\"}", "\",\"replaceRouteId\":" + oldId + "}");
+        mvc.perform(post("/api/routes").with(user("otheruser")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(replaced)).andExpect(status().isNotFound());
+        mvc.perform(delete("/api/routes/" + oldId).with(user("otheruser")).with(csrf())).andExpect(status().isNotFound());
+        mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(replaced.replace("candidate-0", "candidate-4")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/routes/" + oldId).with(user("routeowner"))).andExpect(status().isOk());
+        long newId = json(mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(replaced)).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").asLong();
+        assertNotEquals(oldId, newId);
+        mvc.perform(get("/api/routes/" + oldId).with(user("routeowner"))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/routes/" + newId).with(user("routeowner"))).andExpect(status().isOk());
+        mvc.perform(delete("/api/routes/" + newId).with(user("routeowner")).with(csrf())).andExpect(status().isNoContent());
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM saved_route_point", Integer.class));
+    }
+
+    @Test void savedPlaceAndEditedGuideArePrivateAndUnsafeCrossingEditIsRejected() throws Exception {
+        String place = """
+                {"name":"학교 정문","point":{"lat":37.59,"lng":127.09}}
+                """;
+        mvc.perform(post("/api/places/mine").with(user("routeowner")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(place)).andExpect(status().isNoContent());
+        JsonNode savedPlaces = json(mvc.perform(get("/api/places/mine").with(user("routeowner")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertEquals("학교 정문", savedPlaces.get(0).path("name").asText());
+        long placeId = savedPlaces.get(0).path("id").asLong();
+        mvc.perform(delete("/api/places/mine/" + placeId).with(user("otheruser")).with(csrf()))
+                .andExpect(status().isNotFound());
+
+        long routeId = json(mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(BODY.formatted("candidate-0", "검수")))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("id").asLong();
+        String edit = "/api/routes/" + routeId + "/points/1/guide";
+        String valid = "{\"text\":\"횡단보도 앞에 멈춰서 신호와 양쪽을 확인해요.\"}";
+        mvc.perform(post(edit).with(user("otheruser")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content(valid)).andExpect(status().isNotFound());
+        mvc.perform(post(edit).with(user("routeowner")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"text\":\"횡단보도에서 신호를 무시해요.\"}")).andExpect(status().isBadRequest());
+        assertEquals("TEMPLATE", jdbc.queryForObject(
+                "SELECT guide_source FROM saved_route_point WHERE route_id=? AND seq=1", String.class, routeId));
+        mvc.perform(post(edit).with(user("routeowner")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content(valid)).andExpect(status().isNoContent());
+        assertEquals("EDITED", jdbc.queryForObject(
+                "SELECT guide_source FROM saved_route_point WHERE route_id=? AND seq=1", String.class, routeId));
+    }
+
+    @Test void guestQuotaRejectsFourthSearchWithoutChangingProtectedEndpoint() throws Exception {
+        String points = """
+                {"start":{"lat":37.59,"lng":127.08},"end":{"lat":37.59,"lng":127.09}}
+                """;
+        Cookie cookie = new Cookie("team_guest", java.util.UUID.randomUUID().toString());
+        mvc.perform(post("/api/guest/candidates").cookie(cookie).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isBadRequest());
+        for (int expected = 2; expected >= 0; expected--) {
+            var result = json(mvc.perform(post("/api/guest/candidates").cookie(cookie).with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON).content(points)).andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString());
+            assertEquals(expected, result.path("left").asInt());
+            assertEquals(result.path("candidates").get(0).path("candidateId"), result.path("evidence").get(0).path("candidateId"));
+        }
+        mvc.perform(post("/api/guest/candidates").cookie(cookie).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(points)).andExpect(status().isTooManyRequests());
+        mvc.perform(post("/api/routes/candidates").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content(points)).andExpect(status().isUnauthorized());
+    }
+
+    @Test void recordsGuideToneAndDistinguishesTemplateFromProviderAttempt() throws Exception {
+        String base = BODY.formatted("candidate-0", "고학년 길");
+        String body = base.substring(0, base.length() - 1) + ",\"tone\":\"UPPER\"}";
+        long id = json(mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).path("id").asLong();
+        assertEquals("UPPER", jdbc.queryForObject("SELECT tone FROM guide_log WHERE route_id=?", String.class, id));
+        assertEquals("TEMPLATE", jdbc.queryForObject("SELECT guide_source FROM guide_log WHERE route_id=?", String.class, id));
+        assertEquals(false, jdbc.queryForObject("SELECT attempted FROM guide_log WHERE route_id=?", Boolean.class, id));
     }
 
     private JsonNode json(String body) throws Exception { return mapper.readTree(body); }

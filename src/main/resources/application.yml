@@ -10,6 +10,7 @@ spring:
   sql:
     init:
       mode: always
+      schema-locations: classpath:schema.sql,classpath:db/migration/V001__saved_places.sql,classpath:db/migration/V002__guest_quota.sql,classpath:db/migration/V003__guide_log.sql
 server:
   port: ${PORT:8081}
   servlet:
