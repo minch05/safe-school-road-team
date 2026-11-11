@@ -1,6 +1,7 @@
 package com.safeschoolroad.saved;
 
 import com.safeschoolroad.evidence.RouteEvidence.KeyPoint;
+import com.safeschoolroad.guide.GuideWriter;
 import com.safeschoolroad.route.Point;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
@@ -42,6 +43,17 @@ public class SavedRouteStore {
     @Transactional
     public long save(long memberId, String name, Point start, Point end, String candidateId, int searchOption,
                      List<KeyPoint> points, List<String> guideTexts, String guideSource) {
+        return replace(memberId, name, start, end, candidateId, searchOption, points, guideTexts, guideSource, null, GuideWriter.Tone.LOWER, false);
+    }
+
+    @Transactional
+    public long replace(long memberId, String name, Point start, Point end, String candidateId, int searchOption,
+                        List<KeyPoint> points, List<String> guideTexts, String guideSource, Long replacedId,
+                        GuideWriter.Tone tone, boolean attempted) {
+        if (replacedId != null && jdbc.queryForList(
+                "SELECT id FROM saved_route WHERE id=? AND member_id=? FOR UPDATE", Long.class, replacedId, memberId).isEmpty()) {
+            throw new MissingRoute();
+        }
         if (points.isEmpty() || points.size() != guideTexts.size()
                 || !List.of("AI", TemplateGuide.SOURCE).contains(guideSource)
                 || guideTexts.stream().anyMatch(text -> text == null || text.isBlank() || text.length() > 300)) {
@@ -69,7 +81,24 @@ public class SavedRouteStore {
         jdbc.batchUpdate("""
                 INSERT INTO saved_route_point(route_id, seq, kind, name, reason, lat, lng, along_m, signal_status, source, original_id, guide_text, guide_source)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""", rows);
+        jdbc.update("INSERT INTO guide_log(route_id,tone,guide_source,attempted,point_count) VALUES(?,?,?,?,?)",
+                routeId, tone.name(), guideSource, attempted, points.size());
+        if (replacedId != null) delete(memberId, replacedId);
         return routeId;
+    }
+
+    public static class MissingRoute extends RuntimeException { }
+
+    public boolean delete(long memberId, long routeId) {
+        return jdbc.update("DELETE FROM saved_route WHERE id=? AND member_id=?", routeId, memberId) == 1;
+    }
+
+    public boolean editGuide(long memberId, long routeId, int seq, String text) {
+        return jdbc.update("""
+                UPDATE saved_route_point SET guide_text=?, guide_source='EDITED'
+                WHERE route_id=? AND seq=? AND EXISTS (
+                  SELECT 1 FROM saved_route WHERE id=? AND member_id=?
+                )""", text, routeId, seq, routeId, memberId) == 1;
     }
 
     public List<Summary> list(long memberId) {

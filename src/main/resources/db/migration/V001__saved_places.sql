@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS saved_place (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  member_id BIGINT NOT NULL,
+  name VARCHAR(30) NOT NULL,
+  lat DOUBLE NOT NULL,
+  lng DOUBLE NOT NULL,
+  UNIQUE (member_id, name),
+  FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE
+);

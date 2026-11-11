@@ -68,12 +68,20 @@
     route = await getJson(`/api/routes/${id}`);
     passed = new Set();
     $('route-name').textContent = route.name;
+    $('change-result').textContent = '';
+    $('replace-route').href = '/?replace=' + encodeURIComponent(route.id);
     const ol = $('points');
     ol.replaceChildren();
     for (const p of route.points) {
       const li = document.createElement('li');
       li.id = `point-${p.seq}`;
-      li.textContent = p.guideText;
+      const text = document.createElement('span');
+      text.textContent = p.guideText;
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.textContent = '고치기';
+      edit.onclick = () => editGuide(id, p, text, edit);
+      li.append(text, ' ', edit);
       ol.append(li);
     }
     let line = null;
@@ -153,6 +161,49 @@
 
   $('start').onclick = start;
   $('stop').onclick = () => { stop(); status('안내를 멈췄어요.'); };
+  async function editGuide(id, point, label, button) {
+    const text = window.prompt('이 지점의 안내문', point.guideText);
+    if (text === null) return;
+    button.disabled = true;
+    try {
+      await TeamApi.request(`/api/routes/${id}/points/${point.seq}/guide`, 'POST', { text });
+      point.guideText = label.textContent = text.trim();
+      status('안내문을 저장했어요. 다음 안내부터 변경한 문장을 사용해요.');
+    } catch (error) {
+      status(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  $('check-route').onclick = async () => {
+    if (!route) return;
+    const button = $('check-route'), result = $('change-result'), routeId = route.id;
+    button.disabled = true;
+    try {
+      const checked = await TeamApi.request('/api/routes/' + routeId + '/check', 'POST');
+      if (route?.id === routeId) result.textContent = checked.changed
+        ? `저장 지점 ${checked.distantPoints}곳이 오늘 경로에서 멀어요. 필요하면 다시 등록하세요.`
+        : '저장 지점에서 크게 벗어난 곳이 없어요. 공사·통제나 현장 안전을 확인한 결과는 아니에요.';
+    } catch (error) {
+      if (route?.id === routeId) result.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  };
+  $('delete-route').onclick = async () => {
+    if (!route || !window.confirm('이 경로를 삭제할까요?')) return;
+    const button = $('delete-route');
+    button.disabled = true;
+    try {
+      await TeamApi.request('/api/routes/' + route.id, 'DELETE');
+      await showList();
+    } catch (error) {
+      status(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  };
   $('back').onclick = () => showList().catch(e => status(e.message));
 
   const id = new URLSearchParams(location.search).get('id');

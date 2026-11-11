@@ -38,7 +38,7 @@ public class AuthSecurity {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/index.html", "/login.html", "/signup.html", "/guide.html", "/css/**", "/js/**", "/health/**",
                         "/api/auth/signup", "/api/auth/csrf", "/api/auth/me", "/api/map-config", "/api/places/search",
-                        "/api/facilities/**").permitAll()
+                        "/api/facilities/**", "/safety-map.html", "/api/safety-map/**", "/api/guest/candidates").permitAll()
                 .requestMatchers(HttpMethod.GET, "/samples/candidates-0.json", "/samples/candidates-1.json",
                         "/samples/candidates-2.json", "/samples/candidates-3.json", "/samples/candidates-partial.json").permitAll()
                 .anyRequest().authenticated());
