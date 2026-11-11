@@ -31,3 +31,8 @@ app:
     app-key: ${TMAP_APP_KEY:}
     daily-limit: ${TMAP_DAILY_LIMIT:950}
   remember-me-key: ${REMEMBER_ME_KEY:local-only-change-before-deploy}
+  guide:
+    ai:
+      enabled: ${GUIDE_AI_ENABLED:false}
+      key: ${GROQ_API_KEY:}
+      model: ${GUIDE_AI_MODEL:openai/gpt-oss-20b}

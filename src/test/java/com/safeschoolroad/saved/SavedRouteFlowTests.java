@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.safeschoolroad.route.Point;
 import com.safeschoolroad.route.TmapGateway;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,8 @@ class SavedRouteFlowTests {
         }
     }
 
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    com.safeschoolroad.guide.GuideAiClient ai;
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired ObjectMapper mapper;
@@ -126,6 +129,38 @@ class SavedRouteFlowTests {
         mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(BODY.formatted("candidate-0", "학교 가는 길"))).andExpect(status().isUnprocessableEntity());
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM saved_route", Integer.class));
+    }
+
+    @Test void validAiIsSavedAndReadWithItsSource() throws Exception {
+        org.mockito.Mockito.when(ai.configured()).thenReturn(true);
+        org.mockito.Mockito.when(ai.generate(org.mockito.ArgumentMatchers.anyList())).thenAnswer(invocation -> {
+            List<com.safeschoolroad.guide.GuideWriter.Input> inputs = invocation.getArgument(0);
+            return mapper.writeValueAsString(java.util.Map.of("points", inputs.stream()
+                    .map(p -> java.util.Map.of("seq", p.seq(), "text", p.templateText())).toList()));
+        });
+        JsonNode saved = json(mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(BODY.formatted("candidate-0", "AI 시험")))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
+        assertEquals("AI", saved.path("guideSource").asText());
+        JsonNode detail = json(mvc.perform(get("/api/routes/" + saved.path("id").asLong()).with(user("routeowner")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        for (JsonNode point : detail.path("points")) {
+            assertEquals("AI", point.path("guideSource").asText());
+            assertFalse(point.path("guideText").asText().isBlank());
+        }
+    }
+
+    @Test void invalidAiFallsBackAndPersistsTemplateSource() throws Exception {
+        org.mockito.Mockito.when(ai.configured()).thenReturn(true);
+        org.mockito.Mockito.when(ai.generate(org.mockito.ArgumentMatchers.anyList())).thenReturn(
+                "{\"points\":[{\"seq\":1,\"text\":\"초록불이면 오른쪽으로 가요.\"}]}");
+        JsonNode saved = json(mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(BODY.formatted("candidate-0", "대체 문장 시험")))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
+        assertEquals("TEMPLATE", saved.path("guideSource").asText());
+        JsonNode detail = json(mvc.perform(get("/api/routes/" + saved.path("id").asLong()).with(user("routeowner")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        for (JsonNode point : detail.path("points")) assertEquals("TEMPLATE", point.path("guideSource").asText());
     }
 
     private JsonNode json(String body) throws Exception { return mapper.readTree(body); }
