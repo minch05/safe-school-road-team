@@ -2,11 +2,10 @@ package com.safeschoolroad.saved;
 
 import com.safeschoolroad.evidence.EvidenceAnalyzer;
 import com.safeschoolroad.evidence.RouteEvidence;
+import com.safeschoolroad.guide.GuideWriter;
 import com.safeschoolroad.route.Point;
 import com.safeschoolroad.route.RouteCandidates;
 import com.safeschoolroad.route.TmapGateway;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,11 +29,13 @@ public class SavedRouteApi {
     private final TmapGateway tmap;
     private final EvidenceAnalyzer analyzer;
     private final SavedRouteStore store;
+    private final GuideWriter guide;
 
-    public SavedRouteApi(TmapGateway tmap, EvidenceAnalyzer analyzer, SavedRouteStore store) {
+    public SavedRouteApi(TmapGateway tmap, EvidenceAnalyzer analyzer, SavedRouteStore store, GuideWriter guide) {
         this.tmap = tmap;
         this.analyzer = analyzer;
         this.store = store;
+        this.guide = guide;
     }
 
     public record SaveRequest(Point start, Point end, String candidateId, String name) { }
@@ -60,17 +61,11 @@ public class SavedRouteApi {
         if (points.isEmpty())
             return error(HttpStatus.UNPROCESSABLE_ENTITY, "이 경로에는 안내 지점으로 쓸 공공자료가 없어요. 다른 후보를 골라 주세요.");
 
-        List<String> texts = new ArrayList<>();
-        Map<String, Integer> seen = new HashMap<>();
-        for (int i = 0; i < points.size(); i++) {
-            RouteEvidence.KeyPoint p = points.get(i);
-            int nth = seen.merge(p.kind() + "|" + p.reason(), 1, Integer::sum) - 1;
-            texts.add(TemplateGuide.sentence(p, nth, i == points.size() - 1));
-        }
+        GuideWriter.Result written = guide.write(points);
         int option = chosen.get().candidate().options().get(0);
-        long id = store.save(member.get(), name, req.start(), req.end(), req.candidateId(), option, points, texts);
+        long id = store.save(member.get(), name, req.start(), req.end(), req.candidateId(), option, points, written.texts(), written.source());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", id, "pointCount", points.size(),
-                "guideSource", TemplateGuide.SOURCE, "note", "경로선은 저장하지 않았어요. 안내할 때 오늘 경로선을 다시 받아요."));
+                "guideSource", written.source(), "note", "경로선은 저장하지 않았어요. 안내할 때 오늘 경로선을 다시 받아요."));
     }
 
     @GetMapping("/api/routes") ResponseEntity<?> list(Authentication auth) {

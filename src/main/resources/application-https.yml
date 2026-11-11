@@ -1,0 +1,7 @@
+# Use with prod and a certificate for the actual service hostname.
+server:
+  ssl:
+    enabled: true
+    key-store: ${TLS_KEY_STORE}
+    key-store-type: PKCS12
+    key-store-password: ${TLS_KEY_STORE_PASSWORD}

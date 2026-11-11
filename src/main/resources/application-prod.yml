@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      connection-timeout: 5000
+      validation-timeout: 2000
+server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  forward-headers-strategy: native
+  servlet:
+    session:
+      cookie:
+        secure: true
+app:
+  remember-me-key: ${REMEMBER_ME_KEY}

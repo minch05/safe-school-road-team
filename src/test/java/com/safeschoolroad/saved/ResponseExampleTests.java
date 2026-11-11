@@ -33,7 +33,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <pre>./gradlew test --tests '*ResponseExampleTests' -Dexamples.out=docs/week10/examples</pre>
  * 공공자료는 실제 적재 파일(supported-districts.json.gz)을 쓰고, TMAP 경로선만 망우초 주변 모의 응답이다(외부 호출 없음).
  */
-@SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:response_examples;MODE=MySQL;DB_CLOSE_DELAY=-1")
+@SpringBootTest(properties = {
+        "spring.datasource.url=jdbc:h2:mem:response_examples;MODE=MySQL;DB_CLOSE_DELAY=-1",
+        "app.guide.ai.enabled=false"
+})
 @AutoConfigureMockMvc
 @EnabledIfSystemProperty(named = "examples.out", matches = ".+")
 class ResponseExampleTests {

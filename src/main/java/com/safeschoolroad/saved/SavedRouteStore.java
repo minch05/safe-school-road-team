@@ -36,7 +36,17 @@ public class SavedRouteStore {
     @Transactional
     public long save(long memberId, String name, Point start, Point end, String candidateId, int searchOption,
                      List<KeyPoint> points, List<String> guideTexts) {
-        if (points.isEmpty() || points.size() != guideTexts.size()) throw new IllegalArgumentException("지점과 안내문 수가 맞지 않습니다.");
+        return save(memberId, name, start, end, candidateId, searchOption, points, guideTexts, TemplateGuide.SOURCE);
+    }
+
+    @Transactional
+    public long save(long memberId, String name, Point start, Point end, String candidateId, int searchOption,
+                     List<KeyPoint> points, List<String> guideTexts, String guideSource) {
+        if (points.isEmpty() || points.size() != guideTexts.size()
+                || !List.of("AI", TemplateGuide.SOURCE).contains(guideSource)
+                || guideTexts.stream().anyMatch(text -> text == null || text.isBlank() || text.length() > 300)) {
+            throw new IllegalArgumentException("지점과 안내문 형식이 맞지 않습니다.");
+        }
         GeneratedKeyHolder key = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement("""
@@ -54,7 +64,7 @@ public class SavedRouteStore {
         for (int i = 0; i < points.size(); i++) {
             KeyPoint p = points.get(i);
             rows.add(new Object[]{routeId, i + 1, p.kind(), p.name() == null ? "" : p.name(), p.reason(), p.lat(), p.lng(), p.alongM(),
-                    p.signalStatus(), p.source(), p.originalId(), guideTexts.get(i), TemplateGuide.SOURCE});
+                    p.signalStatus(), p.source(), p.originalId(), guideTexts.get(i), guideSource});
         }
         jdbc.batchUpdate("""
                 INSERT INTO saved_route_point(route_id, seq, kind, name, reason, lat, lng, along_m, signal_status, source, original_id, guide_text, guide_source)
