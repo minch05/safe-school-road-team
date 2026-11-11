@@ -95,6 +95,12 @@
     status('안내 시작을 누르면 위치에 따라 안내가 바뀌어요.');
   }
 
+  function clearLocationMarker() {
+    if (!locationMarker) return;
+    guideLayers.removeLayer(locationMarker);
+    locationMarker = null;
+  }
+
   function update(pos) {
     const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     if (guideMap && !$('guide-map').hidden && Number.isFinite(pos.coords.accuracy) &&
@@ -102,6 +108,8 @@
       const position = [here.lat, here.lng];
       if (locationMarker) locationMarker.setLatLng(position);
       else locationMarker = L.circleMarker(position, { radius: 7, color: '#174e99' }).addTo(guideLayers);
+    } else {
+      clearLocationMarker();
     }
     const r = GuideGeo.step(route.points, passed, here, prepared, pos.coords.accuracy);
     for (const seq of r.newlyArrived || []) {
@@ -122,6 +130,7 @@
       status('위치 권한이 없어요. 목록을 보고 걸어요.');
       return;
     }
+    clearLocationMarker();
     status('위치를 받지 못했어요. 잠시 뒤 다시 해요.');
   }
 
@@ -137,7 +146,7 @@
   function stop() {
     if (watchId != null) navigator.geolocation.clearWatch(watchId);
     watchId = null;
-    if (locationMarker) { guideLayers.removeLayer(locationMarker); locationMarker = null; }
+    clearLocationMarker();
     $('start').hidden = false;
     $('stop').hidden = true;
   }
