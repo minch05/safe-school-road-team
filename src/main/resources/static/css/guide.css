@@ -1,6 +1,6 @@
-/* 길 안내 화면 뼈대 전용 (week9.css 위에 덧붙임) */
+/* 길 안내 화면 전용 (week9.css 위에 덧붙임) */
 .guide { max-width: 640px; margin: 0 auto; padding: 16px; }
-.guide .map-placeholder { height: 240px; border: 2px dashed #9aa; border-radius: 8px; display: grid; place-items: center; color: #567; margin: 12px 0; }
+.guide #guide-map { height: 240px; border: 1px solid #9aa; border-radius: 8px; margin: 12px 0; }
 .guide .guide-now { font-size: 1.5rem; font-weight: 700; line-height: 1.4; }
 .guide #points li.passed { color: #889; text-decoration: line-through; }
 .guide button { min-height: 44px; margin: 4px 4px 4px 0; }
