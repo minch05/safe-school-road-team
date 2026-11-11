@@ -75,6 +75,9 @@ class GuideWriterTests {
                 "횡단보도 앞에서 멈춰요. 신호와 양쪽을 확인하지 않고 건너요.",
                 "횡단보도 앞에서 멈춰요. 신호와 양쪽을 보고 달려가요.",
                 SAFE + " CCTV가 지켜 줘요.",
+                SAFE + " 신호는 확인 안 해도 돼요.",
+                SAFE + " 양쪽을 볼 필요가 없어요.",
+                SAFE + " 신호와 양쪽 확인은 생략해도 돼요.",
                 "횡단보도 앞에서 멈춰요. 신호와 양쪽을 보고 왼쪽으로 꺾어요.")) {
             when(client.generate(anyList())).thenReturn(reply(bad));
             assertEquals("TEMPLATE", writer.write(List.of(CROSSING)).source(), bad);
