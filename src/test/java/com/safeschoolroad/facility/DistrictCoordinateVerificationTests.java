@@ -1,4 +1,3 @@
-
 package com.safeschoolroad.facility;
 
 import org.junit.jupiter.api.Test;
@@ -57,4 +56,3 @@ class DistrictCoordinateVerificationTests {
 				((Number) row.get("lng")).doubleValue(), 0.0000001);
 	}
 }
-
