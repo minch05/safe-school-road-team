@@ -6,7 +6,10 @@
 <main class="page">
     <header class="bar"><a class="icon" th:href="@{/}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>가입하기</h1></header>
     <div class="body">
-        <div class="box info" th:if="${session.pendingRoute != null}">가입하면 비교하던 경로를 이어서 저장할 수 있어요</div>
+        <div class="box info" th:if="${session.pendingRoute != null}">
+            <p>가입하거나 로그인하면 비교하던 경로를 이어서 저장할 수 있어요.</p>
+            <a class="btn soft" th:unless="${under14}" th:href="@{/login}">기존 계정으로 로그인</a>
+        </div>
         <div class="hello"><h2>나이를 골라 주세요</h2><p>생년월일은 받지 않아요.</p></div>
         <a class="card" th:href="@{/signup/form}" style="grid-template-columns:48px 1fr;align-items:center">
             <span style="font-size:34px">🧑</span>
