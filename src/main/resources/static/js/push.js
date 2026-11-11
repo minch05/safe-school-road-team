@@ -38,5 +38,20 @@ const Push = (() => {
     await App.api('/api/push/subscribe', { method: 'POST', body: sub.toJSON() });
   }
 
-  return { status, enable, supported };
+  async function disable() {
+    if (!supported()) return;
+    const registration = await navigator.serviceWorker.getRegistration('/');
+    const subscription = await registration?.pushManager.getSubscription();
+    if (!subscription) return;
+
+    // Keep the endpoint available for retry if removing the server record fails.
+    await App.api('/api/push/unsubscribe', {
+      method: 'POST', body: { endpoint: subscription.endpoint }
+    });
+    if (!await subscription.unsubscribe() && await registration.pushManager.getSubscription()) {
+      throw new Error('브라우저의 알림 구독을 해제하지 못했어요. 다시 시도해 주세요.');
+    }
+  }
+
+  return { status, enable, disable, supported };
 })();

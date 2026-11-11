@@ -1,6 +1,77 @@
 (() => {
   const map=App.makeMap('safetyMap',{zoom:16});
   MapData.attach(map,'#safetyLayers',()=>map.getBounds());
+  const crimeButton = document.querySelector('#atlasCrime');
+  const crimeStatus = document.querySelector('#atlasCrimeStatus');
+  const crimeSource = '출처: 생활안전지도 · 경찰청.';
+  const crimePane = map.createPane('atlasCrimePane');
+  crimePane.style.zIndex = 250;
+  crimePane.style.pointerEvents = 'none';
+  let crimeLayer, crimeUrl, crimeRequest, crimeBounds;
+
+  function clearCrime() {
+    crimeRequest?.abort();
+    crimeRequest = crimeBounds = null;
+    if (crimeLayer) map.removeLayer(crimeLayer);
+    if (crimeUrl) URL.revokeObjectURL(crimeUrl);
+    crimeLayer = crimeUrl = null;
+    crimeButton.disabled = false;
+    crimeButton.textContent = '범죄주의구간 보기';
+    crimeButton.setAttribute('aria-pressed', 'false');
+  }
+
+  map.on('moveend zoomend', () => {
+    if (!crimeBounds || crimeBounds.equals(map.getBounds())) return;
+    clearCrime();
+    crimeStatus.textContent = '지도가 이동했어요. 현재 범위의 자료를 다시 불러올 수 있어요. ' + crimeSource;
+  });
+
+  crimeButton.onclick = async () => {
+    if (crimeLayer) {
+      clearCrime();
+      crimeStatus.textContent = crimeSource;
+      return;
+    }
+    const bounds = map.getBounds();
+    crimeBounds = bounds;
+    const query = new URLSearchParams({
+      south: bounds.getSouth(), west: bounds.getWest(), north: bounds.getNorth(), east: bounds.getEast()
+    });
+    const request = new AbortController();
+    crimeRequest = request;
+    const timeout = setTimeout(() => request.abort(), 25000);
+    crimeButton.disabled = true;
+    crimeStatus.textContent = '제공기관 지도를 불러오는 중이에요…';
+    try {
+      const response = await fetch('/api/risk-map/crime?' + query, { signal: request.signal });
+      if (!response.ok) {
+        const detail = await response.json().catch(() => null);
+        throw new Error(detail?.error || '제공기관 지도를 확인하지 못했어요.');
+      }
+      const image = await response.blob();
+      if (crimeRequest !== request) return;
+      crimeUrl = URL.createObjectURL(image);
+      crimeLayer = MapKit.imageOverlay(crimeUrl, bounds, { opacity: .7, pane: 'atlasCrimePane' }).addTo(map);
+      crimeLayer.on('error', () => {
+        clearCrime();
+        crimeStatus.textContent = '이미지를 표시하지 못했어요. ' + crimeSource;
+      });
+      crimeButton.textContent = '범죄주의구간 숨기기';
+      crimeButton.setAttribute('aria-pressed', 'true');
+      crimeStatus.textContent = crimeSource + ' 과거 범죄 분포를 보여 주는 참고 자료예요.';
+    } catch (error) {
+      if (crimeRequest === request) {
+        crimeBounds = null;
+        crimeStatus.textContent = (request.signal.aborted ? '응답을 기다리는 시간이 초과됐어요.' : error.message) + ' ' + crimeSource;
+      }
+    } finally {
+      clearTimeout(timeout);
+      if (crimeRequest === request) {
+        crimeRequest = null;
+        crimeButton.disabled = false;
+      }
+    }
+  };
   const panelToggle=document.querySelector('#atlasPanelToggle');
   if(panelToggle){
     const media=matchMedia('(max-width:700px)'), controls=document.querySelector('#atlasControls');

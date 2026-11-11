@@ -12,6 +12,10 @@
       <p class="map-caption">지도를 옮긴 뒤 이 지도에서 조회를 눌러 주세요 · 숫자 핀은 시설 묶음이에요</p>
     </section>
     <section class="atlas-panel"><button type="button" class="atlas-panel-toggle" id="atlasPanelToggle" aria-expanded="false" aria-controls="atlasControls">시설·사고 정보 보기 <span aria-hidden="true">⌃</span></button><div id="atlasControls"><div class="atlas-heading"><span class="eyebrow">서울 공공데이터</span><h2>길 주변에 무엇이 있나요?</h2><p>필요한 정보만 골라 지도를 살펴보세요.</p></div><div id="safetyLayers"></div>
+      <section class="box soft" aria-label="범죄주의구간 참고 자료">
+        <button type="button" class="btn soft" id="atlasCrime" aria-pressed="false">범죄주의구간 보기</button>
+        <p class="hint" id="atlasCrimeStatus" role="status">출처: 생활안전지도 · 경찰청. 표시가 없는 곳도 안전하다는 뜻은 아니에요.</p>
+      </section>
       <div class="atlas-next"><b>이 길을 걸어갈 예정인가요?</b><p class="hint">출발지와 도착지를 정하면 경로별 주의할 곳을 비교할 수 있어요.</p><a class="btn soft" th:href="@{/explore}">후보 경로 비교하기 →</a></div>
     </div></section>
   </div>

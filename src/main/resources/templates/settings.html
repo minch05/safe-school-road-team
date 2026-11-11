@@ -14,7 +14,9 @@
             <div th:if="${createdChild}"><span>비밀번호 변경</span><span class="hint">보호자에게 부탁하세요</span></div>
             <div><span>위치 사용</span><span><span id="geoState"></span> <button type="button" class="link" id="geoBtn">켜기</button></span></div>
             <div th:if="${isGuardian}"><span>출발·도착 알림</span><span><span id="pushState"></span>
-                <button type="button" class="link" id="pushBtn">켜기</button> · <button type="button" class="link" id="pushTest">시험</button></span></div>
+                <button type="button" class="link" id="pushBtn" disabled>켜기</button>
+                <button type="button" class="link" id="pushOff" hidden>끄기</button>
+                <button type="button" class="link" id="pushTest" disabled>시험</button></span></div>
             <a th:href="@{/places}" th:unless="${createdChild}"><span>내 장소 관리</span><span>›</span></a>
         </div>
         <h2 class="section-title">가족 연동</h2>
@@ -95,20 +97,34 @@
     };
 
     if ($('#pushState')) {
-        let pushStateVersion=0;
-        const statusVersion=pushStateVersion;
-        Push.status().then(st => {
-            if(statusVersion!==pushStateVersion)return;
-            const label = { on: '켜짐', off: '꺼짐', denied: '막힘(브라우저 설정)', unsupported: '이 브라우저는 안 됨', 'need-install': '홈 화면에 설치해야 함', 'need-https': 'HTTPS 연결 필요', unregistered:'서버 등록 필요', unconfirmed:'등록 상태 확인 못함' };
-            $('#pushState').textContent = label[st];
-            $('#pushBtn').textContent = st === 'on' ? '다시 요청' : '켜기';
-        }).catch(()=>{if(statusVersion===pushStateVersion)$('#pushState').textContent='등록 상태 확인 못함';});
-        $('#pushBtn').onclick = async () => {
-            const btn=$('#pushBtn');if(btn.disabled)return;pushStateVersion++;btn.disabled=true;
-            try { await Push.enable(); App.toast('알림을 켰어요'); $('#pushState').textContent = '켜짐'; }
-            catch (e) { App.toast(e.message); $('#pushState').textContent='등록 상태 확인 못함'; }
-            finally {btn.disabled=false;}
+        const enableButton = $('#pushBtn');
+        const disableButton = $('#pushOff');
+        const testButton = $('#pushTest');
+        const labels = {
+            on: '켜짐', off: '꺼짐', denied: '막힘(브라우저 설정)', unsupported: '이 브라우저는 안 됨',
+            'need-install': '홈 화면에 설치해야 함', 'need-https': 'HTTPS 연결 필요',
+            unregistered: '서버 등록 필요', unconfirmed: '등록 상태 확인 못함'
         };
+        async function refreshPush() {
+            let state;
+            try { state = await Push.status(); }
+            catch (e) { state = 'unconfirmed'; }
+            $('#pushState').textContent = labels[state];
+            enableButton.disabled = ['denied', 'unsupported', 'need-install', 'need-https'].includes(state);
+            enableButton.textContent = state === 'on' ? '다시 요청' : '켜기';
+            disableButton.hidden = !['on', 'unregistered', 'unconfirmed'].includes(state);
+            disableButton.disabled = false;
+            testButton.disabled = state !== 'on';
+        }
+        async function changePush(operation, message) {
+            enableButton.disabled = disableButton.disabled = testButton.disabled = true;
+            try { await operation(); App.toast(message); }
+            catch (e) { App.toast(e.message); }
+            finally { await refreshPush(); }
+        }
+        enableButton.onclick = () => changePush(Push.enable, '알림을 켰어요');
+        disableButton.onclick = () => changePush(Push.disable, '이 기기의 알림을 껐어요');
+        refreshPush();
         $('#pushTest').onclick = async () => {
             try { const d = await App.api('/api/push/test', { method: 'POST', body: {} }); App.toast(d.sent ? '시험 알림을 보냈어요' : '알림을 받을 기기가 없어요. 먼저 켜 주세요.'); }
             catch (e) { App.toast(e.message); }
