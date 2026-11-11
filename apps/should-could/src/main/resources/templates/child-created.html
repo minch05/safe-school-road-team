@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('아이 계정을 만들었어요')}"></head>
+<body>
+<!-- P-02 완료 -->
+<main class="page">
+    <div class="body">
+        <div style="font-size:40px;text-align:center">🎉</div>
+        <h2 style="margin:0;text-align:center" th:text="${child.nickname} + ' 계정을 만들었어요'">계정을 만들었어요</h2>
+        <div class="box soft">아이디 <b th:text="${child.username}">id</b><br><span class="hint">비밀번호는 방금 정한 것을 아이에게 알려 주세요.</span></div>
+        <div class="box">
+            <b>아이 폰에서 이렇게 해 주세요</b>
+            <ol style="margin:6px 0 0;padding-left:18px">
+                <li>이 서비스 주소로 접속해요 (카카오톡 안에서 열리면 사파리·크롬으로 열어요)</li>
+                <li>홈 화면에 추가해요 (아이폰: 공유 → 홈 화면에 추가)</li>
+                <li>설치한 앱에서 위 아이디로 로그인해요</li>
+            </ol>
+        </div>
+        <a class="btn primary" th:href="@{/routes/new(ownerId=${child.id})}" th:text="${child.nickname} + ' 경로 등록하러 가기'">경로 등록</a>
+        <a class="btn" th:href="@{/}">나중에 할게요</a>
+    </div>
+</main>
+</body>
+</html>

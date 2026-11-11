@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('정보 입력')}"></head>
+<body>
+<!-- C-04 가입: 정보 입력 -->
+<main class="page">
+    <header class="bar"><a class="icon" th:href="@{/signup}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>정보 입력</h1></header>
+    <form class="body" method="post" th:action="@{/signup}" th:object="${form}" novalidate>
+        <label class="f">아이디
+            <span class="row">
+                <input class="grow" type="text" id="username" th:field="*{username}" th:errorclass="invalid"
+                       autocomplete="username" autocapitalize="none" maxlength="20">
+                <button class="btn soft" type="button" id="checkUsername" style="width:auto;white-space:nowrap">중복 확인</button>
+            </span>
+            <span class="hint">영문 소문자와 숫자, 4~20자</span>
+            <span id="usernameResult" aria-live="polite"></span>
+            <span class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+        </label>
+        <label class="f">비밀번호
+            <input type="password" th:field="*{password}" th:errorclass="invalid" autocomplete="new-password">
+            <span class="hint">8자 이상</span>
+            <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+        </label>
+        <label class="f">비밀번호 확인
+            <input type="password" th:field="*{passwordConfirm}" th:errorclass="invalid" autocomplete="new-password">
+            <span class="error" th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}"></span>
+        </label>
+        <label class="f">별명
+            <input type="text" th:field="*{nickname}" th:errorclass="invalid" placeholder="예: 하늘" maxlength="10">
+            <span class="hint">실명은 쓰지 마세요. 연동된 보호자에게 이 별명이 보여요.</span>
+            <span class="error" th:if="${#fields.hasErrors('nickname')}" th:errors="*{nickname}"></span>
+        </label>
+        <label class="check"><input type="checkbox" th:field="*{over14}"> 만 14세 이상입니다</label>
+        <p class="error" th:if="${#fields.hasErrors('over14')}" th:errors="*{over14}"></p>
+        <div class="box soft" style="font-size:13px">
+            <b>받는 정보</b> 아이디, 비밀번호, 별명, 저장한 장소·경로 지점, 알림 구독 정보<br>
+            <b>받지 않는 정보</b> 실명, 전화번호, 이메일, 주소, 생년월일, 실시간 위치<br>
+            <span class="hint">이메일을 받지 않아서 비밀번호를 잊으면 찾을 수 없어요.</span>
+        </div>
+        <button class="btn primary big" type="submit">가입하고 시작하기</button>
+    </form>
+</main>
+
+<script th:inline="javascript">
+    // "중복 확인" 버튼: 서버에 물어보고 결과를 아이디 칸 아래에 쓴다. (가입할 때 서버가 한 번 더 확인한다)
+    const checkUrl = /*[[@{/signup/check-username}]]*/ '/signup/check-username';
+    const input = document.getElementById('username');
+    const result = document.getElementById('usernameResult');
+
+    document.getElementById('checkUsername').addEventListener('click', async () => {
+        const username = input.value.trim();
+        result.className = 'hint';
+        result.textContent = '확인하는 중…';
+        try {
+            const res = await fetch(checkUrl + '?username=' + encodeURIComponent(username));
+            const data = await res.json();
+            result.className = data.available ? 'okmsg' : 'error';
+            result.textContent = data.message;
+        } catch (e) {
+            result.className = 'error';
+            result.textContent = '확인하지 못했어요. 잠시 뒤 다시 눌러 주세요.';
+        }
+    });
+    // 아이디를 바꾸면 이전 확인 결과를 지운다
+    input.addEventListener('input', () => { result.textContent = ''; });
+    // 가입을 눌렀다가 서버가 돌려준 오류는, 그 칸을 고치면 바로 지운다 (고쳤는데 빨간 글씨가 남아 헷갈리지 않게)
+    document.querySelectorAll('form .f, form .check').forEach(field => {
+        const control = field.querySelector('input');
+        if (!control) return;
+        control.addEventListener(control.type === 'checkbox' ? 'change' : 'input', () => {
+            control.classList.remove('invalid');
+            const err = field.classList.contains('check') ? field.nextElementSibling : field.querySelector('.error:not(#usernameResult)');
+            if (err && err.classList.contains('error') && err.id !== 'usernameResult') err.remove();
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('로그인')}"></head>
+<body>
+<!-- C-02 로그인 -->
+<main class="page">
+    <header class="bar"><a class="icon" th:href="@{/}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>로그인</h1></header>
+    <!-- th:action 을 쓰면 위조 방지 값(CSRF)이 자동으로 들어간다 -->
+    <form class="body" method="post" th:action="@{/login}">
+        <div class="hello"><h2>다시 만나서 반가워요</h2><p>아이디와 비밀번호를 넣어 주세요.</p></div>
+        <div class="box err" th:if="${param.error}" role="alert">아이디 또는 비밀번호가 맞지 않아요.</div>
+        <label class="f">아이디
+            <input type="text" name="username" placeholder="아이디" autocomplete="username"
+                   autocapitalize="none" required autofocus>
+        </label>
+        <label class="f">비밀번호
+            <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+        </label>
+        <p class="hint">한 번 로그인하면 계속 로그인된 상태로 있어요.</p>
+        <button class="btn primary big" type="submit">로그인</button>
+        <details class="box soft"><summary>비밀번호를 잊었나요?</summary>
+            <p>· 보호자가 만들어 준 아이 계정 → 보호자에게 재설정을 부탁하세요.<br>
+                · 직접 가입한 계정 → 이메일·전화번호를 받지 않아서 찾을 수 없어요.</p>
+        </details>
+        <p class="hint" style="text-align:center">계정이 없나요? <a th:href="@{/signup}">가입하기</a></p>
+    </form>
+</main>
+<script th:inline="javascript">
+    // 로그인에 실패해도 아이디는 다시 쓰지 않게 채워 두고, 비밀번호 칸으로 보낸다 (비밀번호는 저장하지 않는다)
+    (() => {
+        const form = document.querySelector('form.body');
+        const id = form.querySelector('input[name=username]');
+        const pw = form.querySelector('input[name=password]');
+        const failed = /*[[${param.error != null}]]*/ false;
+        try {
+            if (failed) {
+                const saved = sessionStorage.getItem('loginId');
+                if (saved) { id.value = saved; pw.focus(); }
+            }
+            sessionStorage.removeItem('loginId');
+            form.addEventListener('submit', () => {
+                try { sessionStorage.setItem('loginId', id.value.trim()); } catch (_) {}
+            });
+        } catch (_) {}
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('설정')}"></head>
+<body>
+<!-- C-06 설정 -->
+<main class="page">
+    <header class="bar"><a class="icon" th:href="@{/}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>설정</h1></header>
+    <div class="body">
+        <div class="profile-card"><span class="profile-icon" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#user"></use></svg></span><div><h2 th:text="${me.nickname}">별명</h2><p class="hint">내 계정과 통학 알림을 관리해요.</p></div></div>
+        <h2 class="section-title">계정과 기기</h2>
+        <div class="list settings-list">
+            <div><span>별명</span><span><b th:text="${me.nickname}">별명</b> <button type="button" class="link" id="nickBtn">변경</button></span></div>
+            <div th:unless="${createdChild}"><span>비밀번호 변경</span><button type="button" class="link" id="pwBtn">변경</button></div>
+            <div th:if="${createdChild}"><span>비밀번호 변경</span><span class="hint">보호자에게 부탁하세요</span></div>
+            <div><span>위치 사용</span><span><span id="geoState"></span> <button type="button" class="link" id="geoBtn">켜기</button></span></div>
+            <div th:if="${isGuardian}"><span>출발·도착 알림</span><span><span id="pushState"></span>
+                <button type="button" class="link" id="pushBtn" disabled>켜기</button>
+                <button type="button" class="link" id="pushOff" hidden>끄기</button>
+                <button type="button" class="link" id="pushTest" disabled>시험</button></span></div>
+            <a th:href="@{/places}" th:unless="${createdChild}"><span>내 장소 관리</span><span>›</span></a>
+        </div>
+        <h2 class="section-title">가족 연동</h2>
+        <div class="list settings-list">
+            <a th:href="@{/invite(tab='redeem')}" th:if="${guardianLink == null and !isGuardian and me.over14}"><span>보호자와 연동하기 (초대 코드 입력)</span><span>›</span></a>
+            <a th:href="@{/invite}" th:if="${guardianLink == null and me.over14}"><span>14세 이상 자녀 연동 (초대 코드 발급)</span><span>›</span></a>
+            <a th:href="@{/children/new(from=settings)}" th:if="${guardianLink == null and me.over14}"><span>아이 계정 만들기</span><span>›</span></a>
+            <div th:if="${guardianLink != null}"><span>연동된 보호자</span><b th:text="${guardianName}">보호자</b></div>
+            <form th:if="${guardianLink != null and !createdChild}" method="post"
+                  th:action="@{/children/{id}/unlink(id=${guardianLink.guardian.id})}" id="unlinkForm">
+                <button type="submit" class="link" style="color:#b00">보호자와 연동 해제</button>
+            </form>
+            <div th:if="${guardianLink != null}"><span class="hint">출발·도착할 때만 보호자에게 알림이 가요. 내 위치는 보내지 않아요.</span></div>
+        </div>
+        <h2 class="section-title">도움말과 계정 관리</h2>
+        <div class="list">
+            <a th:href="@{/guide}"><span>사용 방법</span><span>›</span></a>
+            <form method="post" th:action="@{/logout}"><button type="submit" class="link" style="color:var(--ink);text-decoration:none">로그아웃</button></form>
+            <button type="button" class="item" id="withdrawBtn" th:unless="${createdChild}"><span style="color:#b00">탈퇴</span><span>›</span></button>
+        </div>
+
+        <form method="post" th:action="@{/settings/nickname}" id="nickForm" hidden><input type="hidden" name="nickname"></form>
+        <form method="post" th:action="@{/settings/password}" id="pwForm" hidden><input type="hidden" name="current"><input type="hidden" name="next"></form>
+        <form method="post" th:action="@{/settings/withdraw}" id="wdForm" hidden><input type="hidden" name="confirmUsername"></form>
+    </div>
+<!-- 보호자와 연동된 아이·자녀 홈에는 아래 메뉴가 없으니 설정에서도 숨긴다(뒤로 버튼으로 홈) -->
+<th:block th:if="${guardianLink == null}"><th:block th:replace="~{fragments/layout :: bottom-nav('settings')}"></th:block></th:block>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/push.js}"></script>
+<script th:inline="javascript">
+    const $ = s => document.querySelector(s);
+    const nick = /*[[${me.nickname}]]*/ '';
+    $('#nickBtn').onclick = () => {
+        const m = App.modal(`<h2>별명 바꾸기</h2><input type="text" id="v" aria-label="새 별명" maxlength="10">
+            <p class="hint" style="margin:0">실명은 쓰지 마세요. 연동된 보호자에게 이 별명이 보여요.</p>
+            <div class="row"><button type="button" class="btn grow" onclick="App.closeModal()">취소</button><button type="button" class="btn primary grow" id="ok">저장</button></div>`);
+        m.querySelector('#v').value = nick;
+        m.querySelector('#ok').onclick = () => { const f = $('#nickForm'); f.nickname.value = m.querySelector('#v').value; f.submit(); };
+    };
+    $('#pwBtn')?.addEventListener('click', () => {
+        const m = App.modal(`<h2>비밀번호 바꾸기</h2>
+            <input type="password" id="cur" aria-label="지금 비밀번호" placeholder="지금 비밀번호" autocomplete="current-password">
+            <input type="password" id="nxt" aria-label="새 비밀번호" placeholder="새 비밀번호 (8자 이상)" autocomplete="new-password">
+            <div class="row"><button type="button" class="btn grow" onclick="App.closeModal()">취소</button><button type="button" class="btn primary grow" id="ok">저장</button></div>`);
+        m.querySelector('#ok').onclick = () => { const f = $('#pwForm'); f.current.value = m.querySelector('#cur').value; f.next.value = m.querySelector('#nxt').value; f.submit(); };
+    });
+    $('#withdrawBtn')?.addEventListener('click', () => {
+        const m = App.modal(`<h2>탈퇴할까요?</h2>
+            <p style="margin:0">경로, 안내문, 내 장소, 출발·도착 기록이 모두 지워지고 되돌릴 수 없어요. 보호자가 만든 아이 계정이 있으면 먼저 지워 주세요.</p>
+            <input type="text" id="v" aria-label="탈퇴 확인 아이디" placeholder="확인을 위해 내 아이디를 입력하세요" autocapitalize="none">
+            <div class="row"><button type="button" class="btn grow" onclick="App.closeModal()">취소</button>
+            <button type="button" class="btn primary grow" id="ok" style="background:#b00;border-color:#b00">탈퇴</button></div>`);
+        m.querySelector('#ok').onclick = () => { const f = $('#wdForm'); f.confirmUsername.value = m.querySelector('#v').value; f.submit(); };
+    });
+
+    // 위치: 이 폰에서만 기억한다 (서버로 보내지 않음)
+    const geo = (() => { try { return localStorage.getItem('ssr-geo'); } catch (e) { return null; } })();
+    $('#geoState').textContent = geo === 'granted' ? '켜짐' : '꺼짐';
+    $('#geoBtn').textContent = geo === 'granted' ? '끄기' : '켜기';
+    if (!window.isSecureContext) { $('#geoState').textContent = 'HTTPS 연결 필요'; $('#geoBtn').disabled = true; }
+    $('#geoBtn').onclick = () => {
+        if (!window.isSecureContext) return;
+        if (geo === 'granted') {
+            try { localStorage.setItem('ssr-geo', 'denied'); } catch (e) {}
+            location.reload(); return;
+        }
+        if (!navigator.geolocation) { App.toast('이 브라우저는 위치를 지원하지 않아요.'); return; }
+        const button = $('#geoBtn'); button.disabled = true; button.textContent = '확인 중…';
+        navigator.geolocation.getCurrentPosition(() => {
+            try { localStorage.setItem('ssr-geo', 'granted'); } catch (e) {}
+            location.reload();
+        }, error => {
+            button.disabled = false; button.textContent = '다시 시도';
+            $('#geoState').textContent = error.code === 1 ? '권한 차단됨' : '위치 확인 실패';
+            App.toast(error.code === 1 ? '주소창 옆 사이트 설정에서 위치를 허용해 주세요. 앱 안 브라우저라면 사파리나 크롬에서 열어 주세요.' : '휴대폰 위치 서비스와 연결을 확인한 뒤 다시 시도해 주세요.');
+        }, { timeout: 12000, maximumAge: 10000 });
+    };
+
+    if ($('#pushState')) {
+        const enableButton = $('#pushBtn');
+        const disableButton = $('#pushOff');
+        const testButton = $('#pushTest');
+        const labels = {
+            on: '켜짐', off: '꺼짐', denied: '막힘(브라우저 설정)', unsupported: '이 브라우저는 안 됨',
+            'need-install': '홈 화면에 설치해야 함', 'need-https': 'HTTPS 연결 필요',
+            unregistered: '서버 등록 필요', unconfirmed: '등록 상태 확인 못함'
+        };
+        async function refreshPush() {
+            let state;
+            try { state = await Push.status(); }
+            catch (e) { state = 'unconfirmed'; }
+            $('#pushState').textContent = labels[state];
+            enableButton.disabled = ['denied', 'unsupported', 'need-install', 'need-https'].includes(state);
+            enableButton.textContent = state === 'on' ? '다시 요청' : '켜기';
+            disableButton.hidden = !['on', 'unregistered', 'unconfirmed'].includes(state);
+            disableButton.disabled = false;
+            testButton.disabled = state !== 'on';
+        }
+        async function changePush(operation, message) {
+            enableButton.disabled = disableButton.disabled = testButton.disabled = true;
+            try { await operation(); App.toast(message); }
+            catch (e) { App.toast(e.message); }
+            finally { await refreshPush(); }
+        }
+        enableButton.onclick = () => changePush(Push.enable, '알림을 켰어요');
+        disableButton.onclick = () => changePush(Push.disable, '이 기기의 알림을 껐어요');
+        refreshPush();
+        $('#pushTest').onclick = async () => {
+            try { const d = await App.api('/api/push/test', { method: 'POST', body: {} }); App.toast(d.sent ? '시험 알림을 보냈어요' : '알림을 받을 기기가 없어요. 먼저 켜 주세요.'); }
+            catch (e) { App.toast(e.message); }
+        };
+    }
+    $('#unlinkForm')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (await App.confirmBox('보호자와 연동을 해제할까요?', '해제하면 보호자가 더 이상 출발·도착 알림을 받지 않아요.', '해제', true)) e.target.submit();
+    });
+    const flash = /*[[${toast}]]*/ null;
+    if (flash) App.toast(flash);
+</script>
+</body>
+</html>

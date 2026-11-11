@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('길 안내')}"></head>
+<body>
+<!-- N-01 길 안내. 내 위치는 이 폰에서만 쓰고 서버로 보내지 않는다 (HANDOFF 1장). -->
+<div class="nav">
+    <div id="navmap"></div>
+    <div class="topnote"><span id="navNote" role="status">출발하면 폰은 넣고 앞을 보며 걸어요</span><a th:href="@{/}" aria-label="닫기">✕</a></div>
+    <div class="nav-status" aria-live="polite"><p id="locationStatus">현재 위치 꺼짐</p><button type="button" class="link" id="locationEnable">내 위치 보기</button><p id="connectionStatus" hidden></p><p id="tripStatus" hidden></p><button type="button" class="link" id="retryStart" hidden>출발 기록 다시 보내기</button></div>
+    <button type="button" class="recenter" id="recenter" aria-label="내 위치로" hidden>◎</button>
+
+    <div class="nav-popup-backdrop" id="popupBackdrop" hidden></div>
+    <div class="popup" id="popup" hidden aria-modal="true" role="alertdialog" aria-live="assertive" aria-labelledby="popText">
+        <div class="emoji" id="popEmoji"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#crosswalk"></use></svg></div>
+        <div class="which" id="popWhich">곧 1번 지점이에요</div>
+        <p id="popText"></p>
+        <button type="button" class="btn primary big" id="closePop">알겠어요</button>
+    </div>
+
+    <div class="sheet">
+        <div class="grab"></div>
+        <div class="row sheet-heading"><b class="grow" th:text="${route.name}" th:title="${route.name}" style="font-size:17px">경로</b>
+            <button type="button" class="btn small ghost" id="sheetToggle" aria-controls="sheetList" aria-expanded="true">목록 접기</button></div>
+
+        <!-- 걷는 중: 다음 지점과 진행 정도 -->
+        <div id="walkInfo" hidden style="display:grid;gap:8px">
+            <div class="next-card"><span class="num" id="nextNum">1</span>
+                <span class="grow"><small id="nextLabel">다음 지점</small><b id="nextText"></b><small id="nextSource" hidden></small></span></div>
+            <button type="button" class="link" id="passedPoint">이 지점을 지났어요</button>
+            <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+        </div>
+
+        <div class="scroll" id="sheetList">
+            <ol class="steps" id="navSteps"></ol>
+            <p class="hint" style="margin:8px 0 0">번호 사이에 표시할 시설이 없는 곳은 지도의 파란 선과 내 위치를 보고 따라가요.</p>
+        </div>
+        <p class="error" id="navError" role="alert"></p><button type="button" class="link" id="retryGuide" hidden>길 안내 다시 불러오기</button>
+        <button type="button" class="btn primary big" id="startBtn">출발하기</button>
+        <div id="arriveWrap" hidden style="display:grid;gap:6px">
+            <button type="button" class="btn primary big" id="arriveBtn" style="background:var(--ok);border-color:var(--ok);box-shadow:none"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#check"></use></svg> 도착했어요</button>
+            <span class="hint" style="text-align:center">도착하면 꼭 눌러 주세요</span>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:inline="javascript">
+    const NAV = {
+        routeId: /*[[${route.id}]]*/ 0,
+        start: [ /*[[${route.startLat}]]*/ 0, /*[[${route.startLng}]]*/ 0],
+        end: [ /*[[${route.endLat}]]*/ 0, /*[[${route.endLng}]]*/ 0],
+        sendsEvents: /*[[${sendsEvents}]]*/ false,
+    };
+</script>
+<script th:src="@{/js/navigation-guard.js}"></script>
+<script th:src="@{/js/navigate.js}"></script>
+</body>
+</html>

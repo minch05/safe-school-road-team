@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('사용 방법')}"></head>
+<body>
+<!-- C-05 사용 방법 -->
+<main class="page">
+    <header class="bar"><a class="icon" th:href="@{/}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>사용 방법</h1></header>
+    <div class="body">
+        <th:block th:replace="~{fragments/guide :: content}"></th:block>
+        <a class="btn" th:href="@{/}">처음 화면으로</a>
+    </div>
+</main>
+</body>
+</html>

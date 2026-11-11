@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('안전정보 지도')}"></head>
+<body>
+<main class="page atlas-page">
+  <header class="bar"><a class="icon" th:href="@{/}" aria-label="홈으로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>안전정보 지도</h1><a class="map-route-link" th:href="@{/explore}">길 비교</a></header>
+  <div class="atlas-layout">
+    <section class="atlas-map-section" aria-label="서울의 안전정보 지도">
+      <form id="mapSearch" class="map-search"><label class="sr-only" for="mapQuery">서울의 장소 검색</label><input id="mapQuery" type="search" placeholder="학교·역·도로명으로 찾기" maxlength="100" enterkeyhint="search"><button type="button" class="search-clear" id="mapClear" aria-label="검색어 지우기" hidden>×</button><button class="btn primary" type="submit">검색</button></form>
+      <div id="mapResults" class="list searchres" hidden></div>
+      <div id="safetyMap" class="map"></div><div class="map-selection" id="mapSelection" hidden><div><small>선택한 장소</small><b id="mapSelectedName"></b></div><a class="btn soft" th:href="@{/explore}" id="mapDirections">여기로 길찾기</a></div>
+      <p class="map-caption">지도를 옮긴 뒤 이 지도에서 조회를 눌러 주세요 · 숫자 핀은 시설 묶음이에요</p>
+    </section>
+    <section class="atlas-panel"><button type="button" class="atlas-panel-toggle" id="atlasPanelToggle" aria-expanded="false" aria-controls="atlasControls">시설·사고 정보 보기 <span aria-hidden="true">⌃</span></button><div id="atlasControls"><div class="atlas-heading"><span class="eyebrow">서울 공공데이터</span><h2>길 주변에 무엇이 있나요?</h2><p>필요한 정보만 골라 지도를 살펴보세요.</p></div><div id="safetyLayers"></div>
+      <section class="box soft" aria-label="범죄주의구간 참고 자료">
+        <button type="button" class="btn soft" id="atlasCrime" aria-pressed="false">범죄주의구간 보기</button>
+        <p class="hint" id="atlasCrimeStatus" role="status">출처: 생활안전지도 · 경찰청. 표시가 없는 곳도 안전하다는 뜻은 아니에요.</p>
+      </section>
+      <div class="atlas-next"><b>이 길을 걸어갈 예정인가요?</b><p class="hint">출발지와 도착지를 정하면 경로별 주의할 곳을 비교할 수 있어요.</p><a class="btn soft" th:href="@{/explore}">후보 경로 비교하기 →</a></div>
+    </div></section>
+  </div>
+<p class="hint" style="padding:12px 16px"><a href="/data-info">자료의 확보 지역과 비교 기준 보기</a></p></main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/map-data.js}"></script>
+<script th:src="@{/js/safety-map.js}"></script>
+</body></html>

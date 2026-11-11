@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head(${detail.child.nickname})}"></head>
+<body>
+<!-- P-03 자녀 상세 -->
+<main class="page" th:with="c=${detail.child}, created=${detail.linkType.name() == 'CREATED'}">
+    <header class="bar"><a class="icon" th:href="@{/}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1 th:text="${c.nickname}">아이</h1></header>
+    <div class="body">
+        <div class="profile-card"><span class="profile-icon" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#bag"></use></svg></span><div><h2 th:text="${c.nickname}">아이</h2><p class="hint" th:text="${created} ? '보호자가 만든 아이 계정' : '초대 코드로 연동한 자녀'">연동된 자녀</p></div></div>
+        <h2 class="section-title">등록한 경로</h2>
+        <a class="card" th:each="r : ${detail.routes}" th:href="@{/routes/{id}(id=${r.id})}">
+            <div class="row wrap"><h3 class="grow" th:text="${r.name}">경로</h3>
+                <span class="tag warn" th:if="${r.changeStatus.name() == 'CHANGED'}">경로 달라졌을 수 있음</span></div>
+            <span class="hint" th:text="${r.startName} + ' → ' + ${r.endName}">출발 → 도착</span>
+        </a>
+        <div class="card empty" th:if="${#lists.isEmpty(detail.routes)}"><b>아직 등록한 경로가 없어요</b>아이가 자주 가는 길부터 추가해 주세요.</div>
+        <a class="btn primary" th:href="@{/routes/new(ownerId=${c.id})}" th:text="'+ ' + ${c.nickname} + ' 경로 추가'">+ 경로 추가</a>
+
+        <h2 class="section-title">최근 출발·도착</h2><details class="inline-help"><summary>이 기록은 무엇인가요?</summary><p class="hint">아이가 누른 출발·도착 버튼 기록이에요. 실시간 위치와 알림 수신 여부를 뜻하지 않아요.</p></details>
+        <div class="list trip-history">
+            <div th:each="t : ${detail.trips}"
+                 th:style="${t.arrivedAt == null and t.delayAlertSentAt != null} ? 'color:var(--warn)'">
+                <span th:text="${#temporals.format(t.startedAt, 'M/d (E)')} + ' ' + ${t.routeName}">10/2 학교 가기</span>
+                <span th:text="${#temporals.format(t.startedAt, 'HH:mm')} + ' 출발 → '
+                     + (${t.arrivedAt != null} ? ${#temporals.format(t.arrivedAt, 'HH:mm')} + ' 도착'
+                     : (${t.delayAlertSentAt != null} ? '도착 기록 없음 (' + ${#temporals.format(t.delayAlertSentAt, 'HH:mm')} + ' 확인)' : '도착 기록 기다리는 중'))">시각</span>
+            </div>
+            <div th:if="${#lists.isEmpty(detail.trips)}"><span class="hint">아직 출발·도착 기록이 없어요.</span></div>
+        </div>
+
+        <h2 class="section-title">계정 관리</h2>
+        <div class="list">
+            <button type="button" class="item" id="resetPw" th:if="${created}"><span>비밀번호 다시 정하기</span><span>›</span></button>
+            <button type="button" class="item" id="deleteChild" th:if="${created}"><span style="color:#b00">아이 계정 삭제</span><span>›</span></button>
+            <button type="button" class="item" id="unlink" th:unless="${created}"><span style="color:#b00">연동 해제</span><span>›</span></button>
+        </div>
+        <p class="hint" th:if="${created}">보호자가 만든 14세 미만 계정은 연동을 해제할 수 없고 삭제만 할 수 있어요. (보호자 없는 아이 계정이 생기지 않게)</p>
+        <p class="hint" th:unless="${created}">초대 코드로 연동한 14세 이상 자녀예요. 연동을 해제하면 출발·도착 알림이 더 오지 않아요.</p>
+
+        <!-- 보내는 폼 (창에서 값을 채워 보낸다) -->
+        <form method="post" th:action="@{/children/{id}/password(id=${c.id})}" id="pwForm" hidden><input type="hidden" name="password"></form>
+        <form method="post" th:action="@{/children/{id}/delete(id=${c.id})}" id="delForm" hidden><input type="hidden" name="confirmNickname"></form>
+        <form method="post" th:action="@{/children/{id}/unlink(id=${c.id})}" id="unlinkForm" hidden></form>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:inline="javascript">
+    const nick = /*[[${detail.child.nickname}]]*/ '';
+    document.getElementById('resetPw')?.addEventListener('click', () => {
+        const m = App.modal(`<h2>${App.esc(nick)} 비밀번호 다시 정하기</h2>
+            <input type="password" id="newPw" aria-label="아이의 새 비밀번호" placeholder="새 비밀번호 (8자 이상)" autocomplete="new-password">
+            <div class="row"><button type="button" class="btn grow" onclick="App.closeModal()">취소</button>
+            <button type="button" class="btn primary grow" id="savePw">저장</button></div>`);
+        m.querySelector('#savePw').onclick = () => {
+            const v = m.querySelector('#newPw').value;
+            if (v.length < 8) { App.toast('8자 이상으로 써 주세요.'); return; }
+            const f = document.getElementById('pwForm'); f.password.value = v; f.submit();
+        };
+    });
+    document.getElementById('deleteChild')?.addEventListener('click', () => {
+        const m = App.modal(`<h2>${App.esc(nick)} 계정을 삭제할까요?</h2>
+            <p style="margin:0">${App.esc(nick)}의 경로, 안내문, 출발·도착 기록이 모두 지워져요. 되돌릴 수 없어요.</p>
+            <input type="text" id="confirmNick" aria-label="삭제 확인용 아이 별명" placeholder="확인을 위해 아이 별명을 입력하세요">
+            <div class="row"><button type="button" class="btn grow" onclick="App.closeModal()">취소</button>
+            <button type="button" class="btn primary grow" id="doDelete" style="background:#b00;border-color:#b00">삭제</button></div>`);
+        m.querySelector('#doDelete').onclick = () => {
+            const f = document.getElementById('delForm'); f.confirmNickname.value = m.querySelector('#confirmNick').value; f.submit();
+        };
+    });
+    document.getElementById('unlink')?.addEventListener('click', async () => {
+        if (await App.confirmBox(`${nick}와(과) 연동을 해제할까요?`, '해제하면 출발·도착 알림이 더 오지 않아요. 경로는 자녀에게 남아요.', '해제', true)) {
+            document.getElementById('unlinkForm').submit();
+        }
+    });
+    const flash = /*[[${toast}]]*/ null;
+    if (flash) App.toast(flash);
+</script>
+</body>
+</html>

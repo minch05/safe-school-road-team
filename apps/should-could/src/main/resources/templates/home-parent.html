@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('홈')}"></head>
+<body>
+<!-- P-01 보호자 홈 -->
+<main class="page parent-page">
+    <header class="bar">
+        <h1>안전한 통학길</h1>
+        <a class="icon" th:href="@{/settings}" aria-label="설정"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#settings"></use></svg></a>
+    </header>
+    <div class="body">
+        <section class="welcome"><div><span class="eyebrow">우리 가족의 통학 노트</span><h2>오늘의 통학 소식</h2><p>출발과 도착을 한눈에 확인해요.</p></div><img th:src="@{/icons/road-friend.svg}" width="64" height="64" alt="" class="road-friend"></section>
+        <div class="box warn" id="pushBanner" hidden>
+            <b>출발·도착 알림이 꺼져 있어요</b>
+            <p class="hint" style="margin:4px 0 8px" id="pushHint">아이폰은 홈 화면에 설치한 앱에서만 알림을 받을 수 있어요.</p>
+            <div class="row banner-actions"><button type="button" class="btn small primary" id="pushAllow">알림 허용하기</button>
+                <button type="button" class="btn small" id="pushLater">나중에</button></div>
+        </div>
+
+        <div class="family-status-heading"><details class="inline-help"><summary>이 기록은 무엇인가요?</summary><p class="hint">아이가 누른 출발·도착 버튼 기록이에요. 실시간 위치나 알림을 읽었는지는 표시하지 않아요.</p></details><button type="button" class="link" id="refreshFamily">최신 기록 확인</button></div>
+        <a class="card" th:each="c : ${children}" th:href="@{/children/{id}(id=${c.id})}"
+           th:classappend="${c.state.name() == 'LATE'} ? 'alert'">
+            <div class="row wrap">
+                <h3 class="grow" th:text="${c.nickname}">아이</h3>
+                <span class="tag warn" th:if="${c.changedCount > 0}" th:text="'경로 달라짐 ' + ${c.changedCount}">경로 달라짐</span>
+            </div>
+            <div class="row wrap">
+                <span class="tag" th:classappend="${c.state.name() == 'ARRIVED'} ? 'ok' : (${c.state.name() == 'LATE'} ? 'warn' : (${c.state.name() == 'WALKING'} ? 'walking' : ''))"
+                      th:text="${c.state.label}">출발 전</span>
+                <span th:if="${c.today == null}">오늘 출발 기록이 아직 없어요</span>
+                <span th:if="${c.today != null}"
+                      th:text="${c.today.routeName} + ' · ' + ${#temporals.format(c.today.startedAt, 'HH:mm')} + ' 출발'
+                               + (${c.today.arrivedAt != null} ? ' → ' + ${#temporals.format(c.today.arrivedAt, 'HH:mm')} + ' 도착' : '')">학교 가기</span>
+            </div>
+            <span class="hint" th:if="${c.state.name() == 'LATE'}"
+                  th:text="'예상 도착 ' + ${#temporals.format(c.today.expectedArrival(), 'HH:mm')} + '이 15분 넘게 지났어요. 도착 버튼을 잊었을 수 있으니 아이에게 연락해 보세요.'">늦음</span>
+            <span class="hint" th:if="${c.routeCount > 0}" th:text="'경로 ' + ${c.routeCount} + '개'">경로</span>
+            <span class="hint next-step" th:if="${c.routeCount == 0}">아직 등록한 경로가 없어요 · 눌러서 통학길 추가 ›</span>
+        </a>
+        <div class="card empty" th:if="${#lists.isEmpty(children)}"><span class="big-emoji" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#bag"></use></svg></span><b>아이와 통학 소식을 나눠요</b>아이 계정을 만들거나 초대 코드로 연동해 주세요.</div>
+        <a class="btn soft" th:href="@{/children/new}">＋ 아이 계정 만들기</a>
+        <a class="link" th:href="@{/invite}" style="text-align:center">만 14세 이상 자녀와 초대 코드로 연동하기</a>
+
+        <nav class="quick-actions" aria-label="길 관리"><a class="quick-card mint" th:href="@{/map}"><span class="quick-icon"><svg class="family-icon" aria-hidden="true"><use href="/icons/family.svg#map"></use></svg></span><span><b>학교 주변 보기</b><small>공공 안전정보 지도</small></span></a><a class="quick-card cream" th:href="@{/routes/new}"><span class="quick-icon"><svg class="family-icon" aria-hidden="true"><use href="/icons/family.svg#route"></use></svg></span><span><b>내 길 등록</b><small>후보 길 비교부터</small></span></a></nav><h2 class="section-title">내 경로</h2>
+        <a class="card" th:each="r : ${routes}" th:href="@{/routes/{id}(id=${r.id})}">
+            <div class="row"><h3 class="grow" th:text="${r.name}">경로</h3>
+                <span class="tag warn" th:if="${r.changeStatus.name() == 'CHANGED'}">경로 달라졌을 수 있음</span></div>
+            <span class="hint" th:text="${r.startName} + ' → ' + ${r.endName}">출발 → 도착</span>
+        </a>
+        <div class="card empty" th:if="${#lists.isEmpty(routes)}"><b>내 경로도 등록할 수 있어요</b>자주 걷는 길의 시설과 주의할 곳을 확인해요.</div>
+
+    </div>
+<th:block th:replace="~{fragments/layout :: bottom-nav('home')}"></th:block>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/push.js}"></script>
+<script th:inline="javascript">
+    (async () => {
+        const banner = document.getElementById('pushBanner');
+        let st; try { st = await Push.status(); } catch (e) { st = 'off'; }
+        // "나중에"를 누르면 이 기기에서 3일 동안 배너를 숨긴다 (설정에서 언제든 켤 수 있다)
+        let snoozed = false;
+        try { snoozed = Number(localStorage.getItem('pushBannerLater') || 0) > Date.now(); } catch (_) {}
+        if (st !== 'on' && !snoozed) {
+            banner.hidden = false;
+            if (st === 'need-https') document.getElementById('pushHint').textContent = '출발·도착 알림은 HTTPS 연결에서 사용할 수 있어요.';
+            if (st === 'denied') document.getElementById('pushHint').textContent = '브라우저 설정에서 이 사이트의 알림이 막혀 있어요. 설정에서 허용해 주세요.';
+            if (st === 'unsupported') document.getElementById('pushHint').textContent = '이 브라우저는 알림을 받을 수 없어요. 사파리(홈 화면 앱)나 크롬을 써 주세요.';
+            // 앱에서 바로 켤 수 없는 상태면 누를 수 없는 버튼을 숨긴다
+            if (st === 'denied' || st === 'unsupported' || st === 'need-https') document.getElementById('pushAllow').hidden = true;
+        }
+        document.getElementById('pushLater').onclick = () => {
+            try { localStorage.setItem('pushBannerLater', String(Date.now() + 3 * 24 * 3600 * 1000)); } catch (_) {}
+            banner.hidden = true;
+            App.toast('설정에서 언제든 알림을 켤 수 있어요');
+        };
+        document.getElementById('pushAllow').onclick = async () => {
+            try { await Push.enable(); banner.hidden = true; App.toast('알림을 켰어요'); }
+            catch (e) { App.toast(e.message); }
+        };
+    })();
+    document.getElementById('refreshFamily').onclick = () => location.reload();
+    const flash = /*[[${toast}]]*/ null;
+    if (flash) App.toast(flash);
+</script>
+</body>
+</html>

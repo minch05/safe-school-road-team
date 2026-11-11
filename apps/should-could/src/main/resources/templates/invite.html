@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: common-head('초대 코드로 연동')}"></head>
+<body>
+<!-- P-04 초대 코드 (FR-23, 만 14세 이상 자녀) -->
+<main class="page">
+    <header class="bar"><a class="icon" th:href="@{/}" aria-label="뒤로"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/icons/ui.svg#back"></use></svg></a><h1>초대 코드로 연동</h1></header>
+    <div class="body">
+        <div class="hello"><h2>통학 소식을 함께 받아요</h2><p>만 14세 이상 자녀와 보호자를 연결해요.</p></div>
+        <div class="seg">
+            <button type="button" data-t="issue" id="tabIssue">코드 발급 (보호자)</button>
+            <button type="button" data-t="redeem" id="tabRedeem">코드 입력 (자녀)</button>
+        </div>
+        <div id="issue" class="card invite-panel">
+            <p style="margin:0">만 14세 이상 자녀에게 이 코드를 알려 주세요. 자녀가 자기 폰에서 "코드 입력"에 넣으면 연동돼요.</p>
+            <div class="invite-code" id="code" aria-live="polite">––– –––</div>
+            <p class="hint" style="text-align:center" id="codeHint">코드는 10분 동안 한 번만 쓸 수 있어요</p>
+            <button type="button" class="btn primary" id="newCode">코드 받기</button>
+        </div>
+        <div id="redeem" class="card invite-panel" hidden>
+            <p style="margin:0">보호자에게 받은 6자리 코드를 입력하세요.</p>
+            <label class="f" for="codeInput">초대 코드</label>
+            <input type="text" id="codeInput" autocomplete="one-time-code" inputmode="numeric" maxlength="7" placeholder="000 000" style="font-size:22px;text-align:center;letter-spacing:6px">
+            <button type="button" class="btn primary" id="check">확인</button>
+            <div class="box" id="confirmBox" hidden>
+                <b id="confirmTitle"></b>
+                <p>연동하면 보호자가 내 경로를 등록할 수 있고, 출발·도착할 때 알림이 가요. 내 위치는 보내지 않아요.</p>
+                <div class="row" style="margin-top:10px"><button type="button" class="btn grow" id="reject">거절</button>
+                    <button type="button" class="btn primary grow" id="accept">연동하기</button></div>
+            </div>
+        </div>
+        <p class="error" id="err" role="alert"></p>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+    const $ = s => document.querySelector(s);
+    let previewVersion=0, previewedCode=null, previewToken=null, linking=false, issuing=false;
+    function invalidatePreview(){++previewVersion;previewedCode=null;previewToken=null;$('#confirmBox').hidden=true;}
+    $('#codeInput').addEventListener('input',invalidatePreview);
+    function tab(t) {
+        if(linking)return;
+        invalidatePreview();
+        $('#issue').hidden = t !== 'issue'; $('#redeem').hidden = t !== 'redeem';
+        $('#tabIssue').classList.toggle('on', t === 'issue'); $('#tabRedeem').classList.toggle('on', t === 'redeem');
+        $('#err').textContent = '';
+    }
+    $('#tabIssue').onclick = () => tab('issue');
+    $('#tabRedeem').onclick = () => tab('redeem');
+    tab(new URLSearchParams(location.search).get('tab') === 'redeem' ? 'redeem' : 'issue');
+
+    $('#newCode').onclick = async () => {
+        if(issuing)return;
+        issuing=true;$('#newCode').disabled=true;
+        try {
+            const d = await App.api('/api/invite/issue', { method: 'POST', body: {} });
+            $('#code').textContent = d.code.slice(0, 3) + ' ' + d.code.slice(3);
+            $('#newCode').textContent = '새 코드 받기';
+            $('#err').textContent = '';
+        } catch (e) {
+            $('#code').textContent='––– –––';
+            $('#err').textContent = '코드 발급 결과를 확인하지 못했어요. 다시 받으면 이전 코드는 사용할 수 없어요.';
+        } finally {issuing=false;$('#newCode').disabled=false;}
+    };
+    $('#check').onclick = async () => {
+        if(linking)return;
+        invalidatePreview();
+        const version=previewVersion,code=$('#codeInput').value.replace(/\D/g,'');
+        if(code.length!==6){$('#err').textContent='6자리 코드를 입력해 주세요.';$('#codeInput').focus();return;}
+        try {
+            const d = await App.api('/api/invite/preview', { method: 'POST', body: { code } });
+            if(version!==previewVersion)return;
+            if(typeof d.guardian!=='string'||!d.guardian.trim()||typeof d.previewToken!=='string'||!d.previewToken)throw new Error('보호자 정보를 확인하지 못했어요. 다시 확인해 주세요.');
+            previewedCode=code;previewToken=d.previewToken;
+            $('#confirmTitle').textContent = `'${d.guardian}'님을 보호자로 연동할까요?`;
+            $('#confirmBox').hidden = false; $('#err').textContent = '';
+            $('#accept').focus();
+        } catch (e) { if(version===previewVersion)$('#err').textContent = e.message; }
+    };
+    $('#reject').onclick = () => { if(linking)return;invalidatePreview();$('#codeInput').value = '';$('#codeInput').focus(); };
+    $('#accept').onclick = async () => {
+        if(linking||!previewedCode)return;
+        const code=previewedCode;
+        linking=true;
+        for(const id of ['#codeInput','#check','#accept','#reject','#tabIssue','#tabRedeem'])$(id).disabled=true;
+        try {
+            await App.api('/api/invite/redeem', { method: 'POST', body: { code,previewToken } });
+            App.toast('보호자와 연동되었어요');
+            setTimeout(() => location.href = '/', 900);
+        } catch (e) {
+            $('#err').textContent='현재 연동 상태를 확인하고 있어요.';
+            try {
+                const state=await App.api('/api/invite/status');
+                if(state.linked===true&&typeof state.guardian==='string'&&state.guardian.trim()){
+                    $('#err').textContent='';
+                    App.toast(`${state.guardian}님과 연결돼 있어요`);
+                    setTimeout(() => location.href='/',900);
+                    return;
+                }
+            } catch (_) {}
+            linking=false;invalidatePreview();$('#err').textContent = e.message;
+            for(const id of ['#codeInput','#check','#accept','#reject','#tabIssue','#tabRedeem'])$(id).disabled=false;
+            $('#check').focus();
+        }
+    };
+
+</script>
+</body>
+</html>

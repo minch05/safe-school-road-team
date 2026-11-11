@@ -1,0 +1,373 @@
+/* 가족을 위한 화면: 따뜻한 바탕, 큰 지도, 짧은 행동, 같은 의미의 그림. */
+:root {
+ --brand:#087d73; --brand-ink:#075c55; --brand-weak:#e3f4ee;
+ --yellow:#f6c85c; --yellow-weak:#fff3d8; --ink:#243d37; --sub:#5b7169;
+ --faint:#7d8f88; --line:#e2eae4; --bg:#f7f9f4; --surface:#fff;
+ --radius:18px; --shadow:0 2px 8px rgba(32,68,53,.04);
+}
+body { letter-spacing:-.2px; }
+.page { max-width:520px; }
+.bar { background:rgba(255,255,255,.97); border-color:var(--line); }
+.bar h1 { font-size:17px; }
+.body { gap:12px; }
+h2 { font-size:21px; }
+.card { border-radius:18px; box-shadow:none; padding:14px; }
+.card h3 { font-size:17px; line-height:1.45; }
+.btn { min-height:44px; padding:10px 14px; font-size:15px; border-radius:13px; }
+.btn.primary { box-shadow:0 3px 0 #056259; }
+.btn.primary:active { transform:translateY(2px); box-shadow:0 1px 0 #056259; }
+.btn.big { min-height:48px; font-size:16px; border-radius:14px; }
+.nav .btn.big, .arrival .btn.big { min-height:56px; font-size:19px; }
+.btn.small { min-height:44px; }
+input:not([type=checkbox]):not([type=radio]), select, textarea { border-radius:12px; }
+.family-icon { display:inline-block; width:36px; height:36px; flex:none; vertical-align:middle; }
+.brand-bar { padding-left:16px; padding-right:16px; justify-content:space-between; }
+.brand-name { display:flex; align-items:center; gap:8px; color:var(--ink); font-size:16px; font-weight:800; text-decoration:none; }
+.brand-name .ui-icon { color:var(--brand); }
+.account-link { display:flex; align-items:center; justify-content:center; min-width:60px; min-height:44px; color:var(--brand-ink); font-size:14px; font-weight:700; text-decoration:none; }
+.welcome { display:flex; justify-content:space-between; align-items:center; gap:12px; min-width:0; }
+.welcome > div { min-width:0; }
+.welcome h1 { font-size:26px; line-height:1.3; letter-spacing:-.7px; margin:5px 0; }
+.welcome h2 { font-size:23px; margin:2px 0; }
+.welcome p { font-size:14px; color:var(--sub); margin:5px 0 0; }
+.eyebrow { color:var(--brand-ink); font-size:12px; font-weight:700; }
+.road-friend { flex:none; object-fit:contain; }
+.home-welcome { padding:12px 16px; min-height:86px; }
+.landing-body { padding:12px 16px 18px; gap:12px; flex:initial; }
+.landing-map-card { border:1px solid var(--line); border-radius:20px; background:white; overflow:hidden; }
+.map-card-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 12px; min-height:40px; font-size:14px; }
+.text-action { display:inline-flex; align-items:center; min-height:44px; padding:6px 0; color:var(--brand-ink); font-size:13px; font-weight:700; background:none; border:0; text-decoration:none; cursor:pointer; }
+.landing-map-card .map-search { padding:0 10px 8px; margin:0; }
+.map-search input { min-width:0; font-size:16px; }
+.landing-map-card .map { height:44dvh; min-height:300px; max-height:460px; border:0; border-radius:0; }
+.landing-map-card .searchres { margin:0 10px 8px; max-height:240px; overflow:auto; }
+.landing-layers > summary { display:flex; justify-content:space-between; align-items:center; min-height:44px; padding:10px 12px; font-size:13px; color:var(--brand-ink); list-style:none; }
+.landing-layers > summary::-webkit-details-marker { display:none; }
+.landing-layers[open] > summary > span { transform:rotate(45deg); }
+.landing-layers #safetyLayers { padding:8px 12px 12px; border-top:1px solid var(--line); }
+.quick-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.quick-card { display:flex; align-items:center; gap:8px; min-height:76px; padding:10px; border-radius:16px; text-decoration:none; color:var(--ink); border:1px solid transparent; }
+.quick-card.mint { background:var(--brand-weak); border-color:#d0e9de; }
+.quick-card.cream { background:var(--yellow-weak); border-color:#f1e3ba; }
+.quick-card > span:nth-child(2) { flex:1; min-width:0; }
+.quick-card b { display:block; font-size:14px; line-height:1.4; }
+.quick-card small { display:block; font-size:11px; margin-top:3px; color:var(--sub); }
+.quick-card > span:last-child:not(:nth-child(2)) { font-size:20px; color:var(--sub); }
+.quick-icon { display:grid; place-items:center; flex:none; width:32px; height:36px; }
+.quick-icon .family-icon { width:32px; height:32px; }
+.landing-note { font-size:12px; line-height:1.5; color:var(--sub); margin:0; text-align:center; }
+.intro-action { justify-content:center; min-height:36px; }
+.section-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.section-heading h2 { font-size:18px; margin:0; }
+.homemap { height:42dvh; min-height:280px; max-height:420px; margin:0 12px; border:1px solid var(--line); border-radius:20px; overflow:hidden; }
+.homemap .ask { left:8px; right:8px; bottom:8px; padding:6px 8px; gap:6px; border-radius:12px; box-shadow:none; }
+.homemap .ask .hint { font-size:12px; }
+.homemap .ask .btn { min-height:40px; font-size:13px; padding:6px 8px; }
+.homemap .ask .link { min-height:40px; font-size:12px; padding:6px 4px; }
+.card.kid { grid-template-columns:48px minmax(0,1fr) auto; padding:12px; gap:10px; border-radius:18px; border-bottom:3px solid #d0e9de; background:#fff; }
+.card.kid .emoji { width:48px; height:48px; background:var(--yellow-weak); border-radius:14px; }
+.card.kid .family-icon { width:36px; height:36px; }
+.card.kid h3 { font-size:18px; }
+.card.kid .meta { font-size:12px; line-height:1.5; }
+.kid-go { display:grid; place-items:center; gap:3px; font-weight:800; font-size:12px; color:var(--brand-ink); }
+.kid-go > span { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:var(--brand-weak); font-size:19px; }
+.kid-page .body { flex:initial; padding-top:8px; }
+.profile-card { background:var(--brand-weak); border-radius:18px; }
+.profile-icon { color:var(--brand-ink); }
+.bottom-nav a.active > .ui-icon { background:var(--brand-weak); }
+.placebox { border-radius:18px; }
+.placebox .dot { color:var(--brand-ink); }
+.progress i { background:var(--brand); }
+.layer-filters button { border-radius:12px; font-size:13px; padding:9px; }
+.layer-filters button[aria-pressed=true] { background:var(--brand-weak); border-color:var(--brand); }
+.layer-filters button[aria-pressed=true]::after { content:'✓'; font-size:12px; }
+.map-source, .facility-list { font-size:13px; }
+.map-poi > span { box-shadow:0 1px 4px #0003; }
+.atlas-panel { border-radius:22px 22px 0 0; }
+.atlas-heading h2 { font-size:19px; }
+.atlas-heading p { margin-bottom:10px; }
+.atlas-map-section .map { height:calc(100dvh - 175px); }
+.atlas-panel .layer-heading .tag { display:none; }
+.cand { border-radius:16px; box-shadow:none; }
+.cand[aria-checked=true] { border-color:var(--brand); }
+.next-card { background:var(--brand-weak); }
+.next-card small { color:var(--brand-ink); }
+.modal .panel { border-radius:22px; }
+.arrival-icon { background:var(--brand-weak); color:var(--brand-ink); }
+@media(min-width:760px) {
+ .landing-page { max-width:980px; }
+ .landing-body { display:grid; grid-template-columns:300px minmax(0,1fr); gap:18px; align-content:start; padding:24px; }
+ .landing-body > .welcome { grid-column:1; align-self:start; flex-direction:column-reverse; align-items:flex-start; margin-top:16px; }
+ .landing-body > .welcome .road-friend { width:112px; height:112px; margin-bottom:12px; }
+ .landing-map-card { grid-column:2; grid-row:1 / span 4; }
+ .landing-map-card .map { height:calc(100dvh - 225px); min-height:360px; max-height:640px; }
+ .landing-body > .quick-actions { grid-column:1; grid-template-columns:1fr; align-self:start; }
+ .landing-body > .landing-note, .landing-body > .intro-action { grid-column:1; align-self:start; text-align:left; justify-content:flex-start; }
+ .landing-body > .box { grid-column:1 / -1; }
+ .atlas-panel { border-radius:0; }
+}
+@media(max-width:700px) {
+ .atlas-map-section { padding:10px 10px 0; }
+ .atlas-map-section .map { height:56dvh; min-height:340px; max-height:560px; }
+ .atlas-panel { padding:14px; }
+ .atlas-heading { display:flex; flex-wrap:wrap; align-items:baseline; column-gap:8px; }
+ .atlas-heading p { flex-basis:100%; font-size:13px; }
+ #candMap { height:48dvh; min-height:300px; max-height:460px; }
+ #pinMap { height:42dvh; min-height:280px; max-height:420px; }
+}
+@media(max-width:360px) {
+ .landing-body { padding:10px; }
+ .welcome h1 { font-size:23px; }
+ .welcome .road-friend { width:68px; height:68px; }
+ .quick-card { gap:6px; padding:8px; min-height:72px; }
+ .quick-card b { font-size:13px; }
+ .quick-card small { font-size:10px; }
+ .quick-card > span:last-child:not(:nth-child(2)) { display:none; }
+ .quick-icon { width:28px; }
+ .card.kid { grid-template-columns:40px minmax(0,1fr) auto; gap:8px; padding:10px; }
+ .card.kid .emoji { width:40px; height:44px; }
+ .card.kid h3 { font-size:16px; }
+ .kid-go { font-size:11px; }
+}
+@media(max-height:600px) {
+ .landing-map-card .map { min-height:260px; }
+ .homemap { min-height:240px; }
+ .atlas-map-section .map { min-height:280px; }
+}
+/* 익숙한 검색과 선택 → 길찾기 연결. */
+:focus-visible { outline:3px solid rgba(8,125,115,.5); outline-offset:2px; }
+.map-search { position:relative; }
+.map-search input { padding-right:36px; }
+.map-search .search-clear { position:absolute; right:76px; top:0; min-width:32px; min-height:44px; width:32px; padding:0; border:0; background:transparent; font-size:23px; color:var(--sub); cursor:pointer; }
+.landing-map-card .map-search .search-clear { right:85px; }
+.map-selection { display:flex; align-items:center; gap:10px; justify-content:space-between; padding:8px 12px; background:var(--surface); border:1px solid var(--line); border-radius:12px; margin-top:8px; }
+.landing-map-card .map-selection { margin:0; border:0; border-top:1px solid var(--line); border-radius:0; }
+.map-selection > div { min-width:0; flex:1; }
+.map-selection small { display:block; color:var(--sub); font-size:11px; }
+.map-selection b { display:block; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.map-selection .btn { width:auto; min-height:44px; font-size:13px; padding:8px 10px; flex:none; }
+.quick-card small { font-size:12px; }
+@media(max-width:360px) { .quick-card small { font-size:11px; } }
+.atlas-panel-toggle { display:flex; align-items:center; justify-content:space-between; min-height:44px; width:100%; padding:4px 2px; border:0; background:white; color:var(--ink); font:700 15px/1.5 inherit; cursor:pointer; }
+.atlas-panel-toggle span { color:var(--sub); font-size:21px; }
+@media(max-width:700px) {
+ .atlas-page { height:100dvh; min-height:0; overflow:hidden; }
+ .atlas-layout { position:relative; min-height:0; }
+ .atlas-map-section { padding:0; }
+ .atlas-map-section .map { height:calc(100dvh - 56px); min-height:0; max-height:none; border:0; border-radius:0; }
+ .atlas-map-section .map-search { position:absolute; top:12px; left:12px; right:12px; z-index:600; margin:0; }
+ .atlas-map-section .map-search input { box-shadow:0 2px 8px #243d3712; }
+ .atlas-map-section #mapResults { position:absolute; left:12px; right:12px; top:66px; z-index:650; background:white; }
+ .atlas-map-section .map-caption { display:none; }
+ .atlas-map-section .map-selection { position:absolute; bottom:82px; left:12px; right:12px; z-index:500; margin:0; box-shadow:var(--shadow); }
+ .atlas-map-section .leaflet-control-zoom { margin-top:76px; }
+ .atlas-map-section .leaflet-control-attribution { margin-top:66px; font-size:11px; }
+ .atlas-panel { position:absolute; bottom:12px; left:12px; right:12px; z-index:600; max-height:46dvh; overflow:auto; border:1px solid var(--line); border-radius:20px; padding:10px 14px; box-shadow:0 4px 20px #243d3718; }
+ .atlas-panel #atlasControls { padding-top:8px; }
+ .atlas-heading .eyebrow { display:none; }
+ .atlas-heading h2 { font-size:17px; }
+}
+.atlas-panel-toggle { font-family:inherit; font-size:15px; font-weight:700; line-height:1.5; }
+@media(max-width:700px) {
+ .atlas-map-section { position:absolute; inset:0; }
+ .atlas-map-section .map { height:100%; }
+}
+.map-poi > span { width:28px; height:28px; font-size:12px; }
+.atlas-panel-toggle { position:sticky; top:0; z-index:2; background:white; }
+
+/* Keep the map and its desktop sidebar within the wide layout. */
+@media(min-width:701px) { .atlas-page { max-width:1120px; } }
+/* 지도 탐색이 첫 화면이며, 행동은 하단에 모은다. */
+.discover-page { max-width:none; height:100dvh; min-height:0; overflow:hidden; }
+.discover-page .landing-body { position:relative; flex:1; min-height:0; padding:0; display:block; }
+.discover-page .landing-map-card { position:absolute; inset:0; border:0; border-radius:0; overflow:visible; }
+.discover-page .landing-map-card .map { height:100%; min-height:0; max-height:none; border:0; border-radius:0; }
+/* 화면 전체가 지도라 제목이 지도를 가리지 않게 화면 읽기용으로만 남긴다 (10-10) */
+.discover-page .map-card-heading { position:absolute; width:1px; height:1px; min-height:0; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.discover-page .map-card-heading a { display:none; }
+.discover-page .map-search { position:absolute; top:14px; left:16px; right:16px; z-index:600; padding:0; margin:0; }
+.discover-page #mapResults { position:absolute; top:66px; left:16px; right:16px; z-index:650; background:white; max-height:40dvh; overflow:auto; }
+.discover-page .leaflet-control-zoom { margin-top:78px; }
+.discover-page .landing-layers { display:none; }
+.discover-dock { position:absolute; z-index:600; left:12px; right:12px; bottom:22px; padding:16px; display:grid; gap:10px; border:1px solid var(--line); border-radius:24px; background:var(--surface); box-shadow:0 6px 24px #243d3715; }
+.discover-dock .welcome { margin:0; }
+.discover-dock .welcome h1 { font-size:21px; margin:0; }
+.discover-dock .welcome .eyebrow { display:none; }
+.discover-dock .welcome p { margin:3px 0 0; font-size:12px; }
+.discover-dock .road-friend { width:48px; height:48px; }
+.discover-dock .quick-card { min-height:58px; border-radius:14px; padding:10px; }
+.discover-dock .quick-card:first-child { background:var(--brand); color:white; border-color:var(--brand); }
+.discover-dock .quick-card:first-child small { color:#fff; }
+.discover-dock .quick-card .quick-icon { display:none; }
+.discover-dock .quick-card b { font-size:15px; }
+.discover-dock .landing-note { margin:0; font-size:11px; }
+.discover-dock .intro-action { min-height:32px; font-size:12px; margin:0; justify-content:center; }
+.discover-page .map-selection { position:absolute; z-index:610; bottom:245px; left:12px; right:12px; border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); }
+.discover-page .landing-body > .box { position:absolute; z-index:700; top:66px; left:12px; right:12px; }
+/* 지도와 한 장소 편집 패널을 함께 보는 길찾기 작업 공간. */
+.route-workspace { height:100dvh; min-height:0; max-width:1120px; overflow:hidden; }
+.route-workspace > .bar { flex:none; }
+.route-workspace .steps-bar { flex:none; padding:8px 12px; font-size:12px; min-height:36px; }
+.route-workspace > .body { position:relative; flex:1; min-height:0; padding:0; overflow:hidden; }
+.route-workspace #pinMap { position:absolute; inset:0; height:100%; min-height:0; max-height:none; border:0; border-radius:0; }
+.planner-panel { position:absolute; z-index:500; left:12px; right:12px; bottom:12px; background:white; border:1px solid var(--line); border-radius:22px; padding:14px; max-height:62%; overflow:auto; display:grid; gap:8px; box-shadow:0 4px 20px #243d3715; }
+.journey-fields { display:grid; gap:0; background:var(--bg); border-radius:14px; padding:0 10px; }
+.journey-fields button { display:flex; align-items:center; gap:10px; text-align:left; border:0; background:none; min-height:52px; padding:8px 0; font:inherit; width:100%; cursor:pointer; }
+.journey-fields button+button { border-top:1px solid var(--line); }
+.journey-fields button>span:nth-child(2) { min-width:0; flex:1; }
+.journey-fields small { color:var(--sub); font-size:11px; }
+.journey-fields b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }
+.journey-fields button[aria-expanded=true] b { color:var(--brand); }
+.journey-dot { width:10px; height:10px; border:2px solid var(--brand); border-radius:50%; flex:none; }
+.journey-dot.destination { background:var(--brand); }
+.planner-caption { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; color:var(--sub); }
+.planner-caption .text-action { font-size:12px; min-height:36px; flex:none; }
+.planner-panel .placebox { padding:0; border:0; box-shadow:none; margin:0; }
+.planner-panel .placebox .head { display:none; }
+.planner-panel .seg { margin:0 0 8px; }
+.planner-panel .seg button { min-height:40px; font-size:13px; }
+.place-options { margin-top:8px; font-size:12px; }
+.place-options summary { min-height:36px; display:flex; align-items:center; color:var(--sub); cursor:pointer; }
+.planner-panel .planner-pin-hint { font-size:11px; margin:0; }
+.planner-panel .error:empty { display:none; }
+.planner-panel .actionbar { position:sticky; bottom:-14px; background:white; padding:8px 0 12px; margin:0; }
+.route-workspace #stepPlaces > .box { position:absolute; z-index:450; left:12px; right:12px; top:12px; padding:8px 12px; font-size:12px; }
+.route-workspace #stepPlaces > .box .hint { display:none; }
+.route-workspace #pinMap .leaflet-control-zoom { margin-top:68px; }
+.comparison-map { position:absolute; left:0; right:380px; top:0; bottom:0; }
+.route-workspace #candMap { height:100%; min-height:0; max-height:none; border:0; border-radius:0; }
+.comparison-map .route-map-layers { position:absolute; z-index:500; top:12px; right:12px; max-height:70%; width:220px; overflow:auto; background:white; border-radius:14px; padding:8px; box-shadow:var(--shadow); }
+.comparison-map .map-caption { position:absolute; z-index:400; bottom:24px; left:12px; right:12px; border-radius:12px; padding:8px; background:#fffe; font-size:12px; }
+.comparison-panel { position:absolute; top:0; bottom:0; right:0; width:380px; padding:16px; overflow:auto; display:flex; flex-direction:column; gap:12px; background:var(--bg); }
+.comparison-panel > * { flex:none; }
+.comparison-panel .compare-intro h2 { font-size:20px; }
+.comparison-panel .compare-intro p { font-size:13px; }
+.comparison-panel .compare-action { position:sticky; bottom:-16px; background:var(--bg); padding:12px 0 16px; margin-top:auto; z-index:5; }
+.comparison-panel .guest-conversion { margin:0; padding:12px; }
+.route-workspace #stepConfirm { overflow:auto; padding:16px; }
+.route-workspace #stepConfirm .actionbar { position:sticky; bottom:-16px; background:var(--bg); padding:12px 0 16px; }
+.kid-page .home-welcome { padding-bottom:4px; }
+.kid-page .card.kid { min-height:88px; }
+.kid-map-preview { border:1px solid var(--line); border-radius:18px; overflow:hidden; background:white; }
+.kid-map-preview summary { padding:14px; min-height:48px; color:var(--brand-ink); font-weight:700; cursor:pointer; }
+.kid-map-preview .homemap { margin:0; border:0; border-radius:0; }
+@media(min-width:701px) {
+ .discover-dock { width:340px; left:24px; right:auto; bottom:32px; }
+ .discover-page .map-search { width:360px; right:auto; left:24px; }
+ .discover-page #mapResults { width:360px; right:auto; left:24px; }
+ .discover-page .map-selection { width:340px; left:24px; right:auto; bottom:270px; }
+ .planner-panel { width:360px; right:auto; left:16px; top:16px; bottom:auto; max-height:calc(100% - 32px); }
+ .route-workspace #stepPlaces > .box { left:400px; right:16px; }
+ .route-workspace #pinMap .leaflet-control-zoom { margin-left:400px; }
+}
+@media(max-width:700px) {
+ .comparison-map { right:0; bottom:auto; height:38%; }
+ .comparison-map .route-map-layers { width:auto; max-width:210px; max-height:75%; font-size:12px; top:8px; right:8px; }
+ .comparison-map .map-caption { display:none; }
+ .comparison-panel { width:auto; left:0; top:38%; border-top:1px solid var(--line); border-radius:22px 22px 0 0; padding:14px; }
+ .comparison-panel .compare-intro .eyebrow { display:none; }
+ .comparison-panel .compare-intro h2 { margin:0; font-size:19px; }
+ .comparison-panel .compare-intro p { margin:3px 0 0; }
+ .comparison-panel .cand { padding:10px; }
+ .comparison-panel .cand .hint { font-size:12px; }
+}
+@media(max-height:600px) and (max-width:700px) {
+ .planner-panel { max-height:68%; padding:10px; }
+ .journey-fields button { min-height:44px; }
+ .planner-pin-hint { display:none; }
+ .discover-dock { gap:6px; padding:12px; bottom:18px; }
+ .discover-dock .welcome { display:none; }
+ .discover-page .map-selection { bottom:190px; }
+}
+.route-workspace #stepCompare > .compare-action { position:absolute; bottom:0; right:0; width:380px; z-index:600; padding:12px 16px 16px; background:var(--surface); border-top:1px solid var(--line); margin:0; }
+.comparison-panel { bottom:132px; }
+.map-view-toggle { position:absolute; z-index:550; bottom:14px; left:12px; width:auto; font-size:12px; background:white; box-shadow:var(--shadow); }
+.comparison-map .map-caption { bottom:70px; }
+@media(max-width:700px) {
+ .route-workspace #stepCompare > .compare-action { width:auto; left:0; padding:10px 14px max(12px,env(safe-area-inset-bottom)); }
+ .comparison-panel { bottom:126px; }
+ .route-workspace.map-focused .comparison-map { height:calc(100% - 126px); }
+ .route-workspace.map-focused .comparison-panel { display:none; }
+}
+@media(max-width:700px) {
+ .comparison-panel .cands { display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; padding:2px 2px 6px; }
+ .comparison-panel .cand { flex:0 0 calc(100% - 24px); scroll-snap-align:start; min-width:0; }
+}
+@media(min-width:701px) { .map-view-toggle { display:none; } }
+
+/* Native map overlays and accessible popup content */
+.map-info{padding:14px;font-size:14px;line-height:1.6;max-height:260px;overflow:auto;color:#243d37}
+.location-dot{display:block;border-radius:50%;box-sizing:content-box;box-shadow:0 1px 5px #0003}
+.naver-map{font-family:inherit}
+
+.native-zoom{position:absolute;right:12px;top:78px;z-index:400;display:grid;gap:1px;box-shadow:0 2px 8px #0002;border-radius:12px;overflow:hidden}
+.native-zoom button{width:40px;height:40px;min-height:40px;padding:0;background:#fff;border:0;color:#243d37;font-size:24px;cursor:pointer}
+.native-zoom button:focus-visible{outline:3px solid #087d73;outline-offset:-3px}
+.naver-map.map-info-open .native-zoom{display:none}
+.comparison-map:has(details[open]) .native-zoom{display:none}
+/* Route comparison: measured evidence linked to its actual map location. */
+.route-evidence h3,.route-suggestion h3{margin:0 0 10px;font-size:16px}
+.evidence-filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.evidence-filters button{display:flex;gap:5px;align-items:center;flex-shrink:0;min-height:42px;background:#f5f7f4;border:1px solid #dce4de;border-radius:12px;padding:8px 10px;font-size:12px;color:#243d37}
+.evidence-filters button[aria-pressed=true]{background:#e5f3ed;border-color:#087d73;color:#086658}
+.evidence-filters small{font-weight:700;white-space:nowrap}
+.evidence-list{max-height:190px;overflow-y:auto}
+.evidence-list button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:12px 0;border:0;border-top:1px solid #e6ece6;background:white;color:#243d37;min-height:52px}
+.evidence-list small{display:block;font-size:11px;line-height:1.5;margin-top:4px;color:#61706a}
+.spot-action{flex-shrink:0;font-size:11px;color:#087d73}
+.evidence-map-label{position:absolute;top:58px;left:12px;z-index:500;max-width:calc(100% - 76px);background:#fffffff0;border-radius:10px;padding:7px 10px;font-size:11px;line-height:1.6;pointer-events:none}
+.legend-upper{color:#b63279}.legend-unknown{color:#636b72}
+.route-suggestion p,.route-suggestion li,.pair-comparison{font-size:13px;line-height:1.65}
+.route-suggestion summary{font-size:13px;font-weight:700;padding:10px 0;cursor:pointer}
+.route-suggestion ul{padding-left:20px}
+.pair-comparison+ .pair-comparison{margin-top:12px;padding-top:12px;border-top:1px solid #dce4de}
+.pair-comparison p{margin:5px 0}.pair-comparison small{color:#61706a;display:block}
+.proposal-link{padding:5px 0;background:none;border:0;color:#087d73;text-decoration:underline;text-underline-offset:3px;font-size:12px;min-height:32px;cursor:pointer}
+.choice-proposal{font-size:10px;white-space:nowrap;color:#087d73;background:#e5f3ed;padding:3px 5px;border-radius:6px}
+.selection-summary summary{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;min-height:34px}
+.selection-summary .route-dot{width:24px;height:24px;font-size:11px}
+.selection-summary{padding:8px 12px}
+.route-suggestion .suggestion-brief{padding:10px;background:#eef5ef;border-radius:10px}
+.map-info-close{float:right;width:44px;height:44px;min-height:44px;margin:-7px -7px 3px 8px;padding:0;border:0;border-radius:8px;background:#eef3ed;color:#243d37;font-size:22px;cursor:pointer}
+.evidence-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;gap:6px}
+.evidence-filters button{display:grid;grid-template-columns:16px minmax(0,1fr);gap:2px 5px;padding:7px;min-height:48px;font-size:10px;text-align:left;white-space:normal}
+.evidence-filters button .ui-icon{width:16px;height:16px;grid-row:1/3;align-self:center}
+.evidence-filters button span{grid-column:2;line-height:1.4}
+.evidence-filters button small{grid-column:2;font-size:11px;line-height:1.3}
+.evidence-filters button{font-size:12px}
+.evidence-filters button small{font-size:12px}
+
+.nav-status{position:absolute;z-index:450;left:12px;right:64px;top:64px;max-width:360px;padding:7px 10px;border-radius:12px;background:#fffffff2;box-shadow:0 2px 8px #0001;font-size:12px;line-height:1.5;max-height:24dvh;overflow:auto}
+.nav-status p{margin:0}
+.nav-status .link{min-height:44px;padding:8px 0;font-size:12px;display:block}
+.family-status-heading{display:flex;align-items:center;gap:12px}
+.family-status-heading p{flex:1;margin:0}
+.family-status-heading .link{flex:none;min-height:44px;font-size:12px}
+
+@media(max-height:600px){
+ .nav-status{top:52px;max-height:18dvh;padding:5px 8px;font-size:11px}
+ .nav-status .link{display:inline-block;padding:4px 6px;min-height:36px}
+ .sheet #passedPoint{min-height:36px;padding:4px 0}
+}
+
+.route-suggestion{padding:10px 12px;font-size:13px;line-height:1.6}
+.route-suggestion .suggestion-brief{margin:0 0 6px}
+.route-suggestion details summary{min-height:36px;padding:6px 0}
+/* 자료 날짜·출처 설명은 지도 팝업 안에서 줄바꿈한다. */
+.map-info{width:280px;max-width:calc(100vw - 56px);box-sizing:border-box;white-space:normal;overflow-wrap:anywhere}
+/* 비교 근거와 자료 부족은 길을 고르기 전에 보인다. */
+.comparison-status{display:grid;gap:5px;padding:12px 14px;border-radius:14px;background:#fff8e8;color:#654a18;font-size:.88rem;line-height:1.55}
+.comparison-status small{color:#766344}
+.suggestion-lead{line-height:1.55}
+.suggestion-lead p{margin:6px 0 12px;font-size:.92rem}
+
+.nav .nav-status{top:var(--nav-status-top,64px);max-height:max(44px,min(24dvh,calc(var(--nav-sheet-top,100dvh) - var(--nav-status-top,64px) - 12px)))}
+
+/* 자주 볼 필요 없는 설명은 접어 둔다 (10-10 UX 정리) */
+.inline-help{flex:1;font-size:13px;color:var(--sub,#5b6472)}
+.inline-help summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:4px;list-style:none;color:var(--brand-ink)}
+.inline-help summary::-webkit-details-marker{display:none}
+.inline-help summary::before{content:"ⓘ";font-size:14px}
+.inline-help p{margin:0 0 8px}
+.banner-actions{gap:8px;flex-wrap:wrap}
+.banner-actions .btn{width:auto}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+ <ellipse cx="60" cy="109" rx="36" ry="5" fill="#DDECE5"/>
+ <path d="M47 24v-7a13 13 0 0 1 26 0v7" stroke="#176A61" stroke-width="7"/>
+ <path d="M25 54 14 67M95 53l12-13" stroke="#176A61" stroke-width="8" stroke-linecap="round"/>
+ <path d="m44 94-5 12M77 94l5 12" stroke="#176A61" stroke-width="9" stroke-linecap="round"/>
+ <rect x="25" y="23" width="70" height="75" rx="26" fill="#83D9C3" stroke="#176A61" stroke-width="3"/>
+ <path d="M32 41c7-11 15-14 28-14" stroke="#BFF0DE" stroke-width="5" stroke-linecap="round"/>
+ <rect x="34" y="66" width="52" height="25" rx="11" fill="#FFE192"/>
+ <path d="M42 73h36" stroke="#CE9A32" stroke-width="2.5" stroke-linecap="round"/>
+ <circle cx="46" cy="48" r="3.5" fill="#183F3B"/><circle cx="74" cy="48" r="3.5" fill="#183F3B"/>
+ <path d="M53 55q7 7 14 0" stroke="#183F3B" stroke-width="3" stroke-linecap="round"/>
+ <ellipse cx="38" cy="56" rx="5" ry="3" fill="#F29E8B"/><ellipse cx="82" cy="56" rx="5" ry="3" fill="#F29E8B"/>
+ <path d="m102 28 2 8 8 2-8 2-2 8-2-8-8-2 8-2Z" fill="#E9B533"/>
+</svg>

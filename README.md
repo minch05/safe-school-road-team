@@ -1,19 +1,27 @@
 # 초등학생 통학 안전·안내 서비스 — 팀 저장소
 
-Java 21 · Spring Boot 3.5.6 · Gradle 8.14.3. 가입·로그인, 실제 TMAP 후보, 지원 지역 공공자료 적재, 후보별 근거 분석, 경로 저장·재조회와 안내문 생성이 구현돼 있습니다. 후보 카드는 근거·저장 API 연결 작업 중이며 길 안내 화면은 뼈대 단계입니다.
+Java 21 · Spring Boot 3.5.6 · Gradle 8.14.3. 가입·로그인, 실제 TMAP 후보, 지원 지역 공공자료 적재, 후보별 근거 분석, 경로 저장·재조회와 안내문 생성이 구현돼 있습니다. 후보 카드에서 근거를 비교하고 경로를 저장한 뒤 길 안내 지도에서 경로선과 안내 지점을 볼 수 있습니다.
 
-## 빠른 실행
+## 실행 위치
+
+| 앱 | 작업 폴더 | 로컬 주소 | 시험 DB |
+|---|---|---|---|
+| 팀 앱 · 11주차 Must | 저장소 루트 | `http://localhost:8081` | 기본 H2 또는 루트 Compose MySQL `127.0.0.1:3309` |
+| Should·Could 앱 | [apps/should-could](apps/should-could/README.md) | `http://127.0.0.1:8080` | 별도 Compose MySQL `127.0.0.1:3308` |
+
+두 앱의 서버와 DB는 별도로 실행합니다. 각 작업 폴더에 해당 앱의 `.env`를 두세요. 브라우저에서 두 앱을 동시에 시험할 때는 표의 주소대로 열면 세션 쿠키가 겹치지 않습니다.
+
+## 팀 앱 빠른 실행
 
 ```sh
-cp .env.example .env
-# .env의 키와 DB 연결을 본인 개발 환경에 맞게 입력; Git에 올리지 않음
+# H2는 .env 없이 실행할 수 있습니다. 외부 키가 필요하면 .env.example을 복사해 설정하세요.
 ./gradlew test bootJar
 ./gradlew bootRun --args='--import-crosswalk-sample'
 ```
 
 브라우저에서 `http://localhost:8081`을 엽니다. `.env`는 실행 폴더에서 선택적으로 읽습니다. `TMAP_APP_KEY`가 없으면 실제 경로를 만들지 않고 오류를 표시합니다. 지도는 네이버가 기본이고, SDK 인증 실패 또는 키 미설정 시 VWorld 보조 지도로 전환합니다. VWorld도 없으면 좌표 입력으로 API 계약만 시험할 수 있습니다. 네이버 지도/검색의 허용 도메인은 공급자 콘솔에서 확인해야 합니다.
 
-`DB_URL`을 설정하지 않으면 재시작 시 사라지는 H2 개발 DB를 사용합니다. 팀 DB 시험에는 `compose.yaml`의 MySQL 8 또는 승인된 별도 MySQL 8을 사용하고, `.env`에 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`를 설정합니다. 기존 3306 DB가 있으면 Docker를 중복 실행하지 마세요. `REMEMBER_ME_KEY`도 배포 전에 고유한 값으로 바꾸세요.
+`DB_URL`을 설정하지 않으면 재시작 시 사라지는 H2 개발 DB를 사용합니다. 팀 DB 시험에는 `compose.yaml`의 MySQL 8 또는 승인된 별도 MySQL 8을 사용하고, `.env`에 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`를 설정합니다. 루트 Compose는 로컬 3309 포트를 사용합니다. `REMEMBER_ME_KEY`도 배포 전에 고유한 값으로 바꾸세요.
 
 ## 이번 주 API
 
@@ -45,7 +53,7 @@ TMAP 옵션 0·4·10을 요청하고 **전체 경로선이 동일할 때만** �
 
 ## Git·Jira
 
-이 코드는 민채의 선행 구현입니다. 다른 팀원의 최초 구현으로 기록하지 않습니다. Jira 백로그 변경은 교수님 검수 전까지 로컬 초안으로만 둡니다. `.env`, 키, 개발 DB, TMAP 캐시 응답, 사용자 위치는 Git에 올리지 않습니다.
+.env와 DB 설정은 각 앱의 실행 폴더에서 관리합니다. `.env`, 키, 개발 DB, TMAP 캐시 응답, 사용자 위치는 Git에 올리지 않습니다.
 
 ## AI 안내문과 HTTPS 운영 설정
 

@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.safeschoolroad'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        // Spring AI 1.1.x 가 Spring Boot 3.5 용이다 (2.x 는 Boot 4)
+        mavenBom 'org.springframework.ai:spring-ai-bom:1.1.8'
+    }
+}
+
+dependencies {
+    // 1단계: 화면이 뜨는 것까지
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // 2단계: DB
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // 3단계: 로그인 (세션 로그인 + 자동 로그인)
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
+    // API 문서와 로그인 세션·CSRF를 사용하는 Swagger UI (Boot 3.5 호환 2.8.x)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
+
+    // AI 안내문·경로 차이 설명. OpenAI 호환 방식이라 설정만 바꾸면 Gemini·OpenAI 등 모델을 바꿀 수 있다
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+    // 출발·도착 웹 푸시 (VAPID). 암호화에 BouncyCastle 을 함께 쓴다 (2026-10-09 승인)
+    implementation 'nl.martijndwars:web-push:5.1.2'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+    implementation 'org.apache.httpcomponents:httpasyncclient:4.1.5'
+    implementation 'org.bitbucket.b_c:jose4j:0.9.6'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
