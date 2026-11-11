@@ -3,6 +3,36 @@
 (function () {
   const $ = id => document.getElementById(id);
   let route = null, prepared = null, passed = new Set(), watchId = null;
+  let guideMap, guideLayers, locationMarker;
+
+  function drawGuideMap(line, points) {
+    if (!window.L) return;
+    const mapEl = $('guide-map');
+    mapEl.hidden = false;
+    if (!guideMap) {
+      guideMap = L.map(mapEl);
+      guideLayers = L.layerGroup().addTo(guideMap);
+      fetch('/api/map-config').then(r => r.ok ? r.json() : null).then(config => {
+        if (!config?.vworldKey) return;
+        const key = encodeURIComponent(config.vworldKey);
+        L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${key}/Base/{z}/{y}/{x}.png`, {
+          attribution: '© VWorld', maxZoom: 19
+        }).addTo(guideMap);
+      }).catch(() => {});
+    }
+    guideLayers.clearLayers();
+    locationMarker = null;
+    const path = (line || []).map(p => [p.lat, p.lng]);
+    if (path.length > 1) L.polyline(path, { color: '#176a45', weight: 5 }).addTo(guideLayers);
+    for (const p of points) {
+      const label = document.createElement('span');
+      label.textContent = `${p.seq}. ${p.guideText}`;
+      L.circleMarker([p.lat, p.lng], { radius: 6 }).bindTooltip(label).addTo(guideLayers);
+    }
+    guideMap.invalidateSize();
+    const bounds = L.latLngBounds([...path, ...points.map(p => [p.lat, p.lng])]);
+    if (bounds.isValid()) guideMap.fitBounds(bounds, { padding: [16, 16], maxZoom: 17 });
+  }
 
   function status(text) { $('guide-status').textContent = text; }
 
@@ -46,24 +76,33 @@
       li.textContent = p.guideText;
       ol.append(li);
     }
+    let line = null;
     // 오늘 경로선: 못 받아도 저장한 지점으로 안내한다(서버가 503과 안내 문구를 준다)
     try {
       const today = await getJson(`/api/routes/${id}/line`);
-      prepared = GuideGeo.prepareLine(today.line);
+      line = today.line;
+      prepared = GuideGeo.prepareLine(line);
       $('line-note').textContent = today.note;
-      // TODO(지도): today.line과 route.points를 지도에 그린다
     } catch (e) {
       prepared = null;
       $('line-note').textContent = e.message;
     }
     $('route-list').hidden = true;
     $('route-guide').hidden = false;
+    try { drawGuideMap(line, route.points); }
+    catch (e) { $('guide-map').hidden = true; }
     $('now').textContent = route.points[0].guideText;
     status('안내 시작을 누르면 위치에 따라 안내가 바뀌어요.');
   }
 
   function update(pos) {
     const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    if (guideMap && !$('guide-map').hidden && Number.isFinite(pos.coords.accuracy) &&
+        pos.coords.accuracy <= 50 && Number.isFinite(here.lat) && Number.isFinite(here.lng)) {
+      const position = [here.lat, here.lng];
+      if (locationMarker) locationMarker.setLatLng(position);
+      else locationMarker = L.circleMarker(position, { radius: 7, color: '#174e99' }).addTo(guideLayers);
+    }
     const r = GuideGeo.step(route.points, passed, here, prepared, pos.coords.accuracy);
     for (const seq of r.newlyArrived || []) {
       passed.add(seq);
@@ -98,6 +137,7 @@
   function stop() {
     if (watchId != null) navigator.geolocation.clearWatch(watchId);
     watchId = null;
+    if (locationMarker) { guideLayers.removeLayer(locationMarker); locationMarker = null; }
     $('start').hidden = false;
     $('stop').hidden = true;
   }
