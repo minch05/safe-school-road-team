@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>길 안내 · 통학 안전 안내</title>
+<link rel="stylesheet" href="/css/week9.css">
+<link rel="stylesheet" href="/css/guide.css">
+<!--
+  길 안내 화면 뼈대 (RGN6-127 팀원용 보조자료 → 11주차 이동한 길 안내 화면).
+  지금 되는 것: 저장 경로 목록 → 상세(안내 지점·기본 안내문) → 오늘 경로선 → 위치 따라 안내문 바꾸기.
+  남은 일(TODO): 지도에 경로선·지점 그리기(week9-map.js의 drawRoutes 재사용), 큰 글씨·음성, AI 안내문 받으면 guideText 바꾸기.
+  주소 예: /guide.html  또는 /guide.html?id=1 (바로 그 경로 열기)
+-->
+<main class="guide">
+  <h1>길 안내</h1>
+  <p id="guide-status" role="status">저장한 경로를 불러오는 중이에요.</p>
+
+  <section id="route-list" aria-label="저장한 경로" hidden>
+    <h2>저장한 경로</h2>
+    <ul id="routes"></ul>
+  </section>
+
+  <section id="route-guide" aria-label="안내" hidden>
+    <h2 id="route-name"></h2>
+    <!-- TODO(지도): 여기에 지도. 오늘 경로선(line)과 points를 그린다 -->
+    <div id="guide-map" class="map-placeholder">지도 자리</div>
+    <p id="now" class="guide-now" aria-live="assertive"></p>
+    <p id="next-distance"></p>
+    <ol id="points"></ol>
+    <p id="line-note"></p>
+    <button id="start" type="button">안내 시작</button>
+    <button id="stop" type="button" hidden>안내 멈추기</button>
+    <button id="back" type="button">목록으로</button>
+    <p class="note">신호는 확정 자료가 없어요. 횡단보도에서는 꼭 멈춰서 실제 신호와 양쪽을 확인해요.</p>
+  </section>
+</main>
+<script src="/js/guide-geo.js"></script>
+<script src="/js/guide.js"></script>
+</html>

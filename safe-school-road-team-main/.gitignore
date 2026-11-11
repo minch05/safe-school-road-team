@@ -1,0 +1,31 @@
+# ── 비밀 정보: 절대 GitHub에 올리지 않는다 ──
+.env
+.env.*
+!.env.example
+
+# 아이폰 시험에서 만든 키·기기 정보 (experiments/iphone-push/.gitignore 에도 있음)
+vapid-keys.json
+subscription.json
+
+# 설치·빌드 결과물
+node_modules/
+build/
+out/
+target/
+.gradle/
+
+# 시험용 실행 파일·기록
+experiments/iphone-push/cloudflared
+*.log
+
+# 편집기·운영체제가 만드는 파일
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# 내려받은 공공데이터 원본 (용량이 커서 올리지 않는다)
+무제 폴더/
+
+# 파이썬 실행 찌꺼기
+__pycache__/
