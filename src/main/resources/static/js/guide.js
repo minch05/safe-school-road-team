@@ -74,10 +74,21 @@
     // TODO(음성·진동): r.state가 ARRIVED·OFF_ROUTE일 때
   }
 
+  // 위치 권한을 거부하면 안내를 멈춘 상태로 돌려 다시 시작할 수 있게 하고, 저장한 목록으로 걷도록 알린다
+  function positionError(e) {
+    if (e.code === 1) {
+      stop();
+      $('now').textContent = '위치를 쓸 수 없어요. 아래 안내 목록을 보고 걸어요.';
+      $('next-distance').textContent = '';
+      status('위치 권한이 없어요. 목록을 보고 걸어요.');
+      return;
+    }
+    status('위치를 받지 못했어요. 잠시 뒤 다시 해요.');
+  }
+
   function start() {
     if (!('geolocation' in navigator)) { status('이 기기에서는 위치를 쓸 수 없어요. 목록을 보고 걸어요.'); return; }
-    watchId = navigator.geolocation.watchPosition(update,
-      e => status(e.code === 1 ? '위치 권한이 없어요. 목록을 보고 걸어요.' : '위치를 받지 못했어요. 잠시 뒤 다시 해요.'),
+    watchId = navigator.geolocation.watchPosition(update, positionError,
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 });
     $('start').hidden = true;
     $('stop').hidden = false;
