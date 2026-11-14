@@ -163,5 +163,27 @@ class SavedRouteFlowTests {
         for (JsonNode point : detail.path("points")) assertEquals("TEMPLATE", point.path("guideSource").asText());
     }
 
+    /** RGN6-128·129: 다른 계정 목록, 없는 ID, 익명 조회, CSRF 없는 저장을 막는다. */
+    @Test void ownerOnlyListMissingIdAnonymousAndMissingCsrf() throws Exception {
+        long id = json(mvc.perform(post("/api/routes").with(user("routeowner")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(BODY.formatted("candidate-0", "학교 가는 길")))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).path("id").asLong();
+
+        JsonNode otherList = json(mvc.perform(get("/api/routes").with(user("otheruser")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertEquals(0, otherList.path("routes").size(), "다른 계정 목록에 남의 경로가 없어야 한다");
+
+        mvc.perform(get("/api/routes/" + (id + 1000)).with(user("routeowner"))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/routes/" + (id + 1000) + "/line").with(user("routeowner"))).andExpect(status().isNotFound());
+
+        mvc.perform(get("/api/routes")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/routes/" + id)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/routes/" + id + "/line")).andExpect(status().isUnauthorized());
+
+        mvc.perform(post("/api/routes").with(user("routeowner")).contentType(MediaType.APPLICATION_JSON)
+                .content(BODY.formatted("candidate-0", "CSRF 없음"))).andExpect(status().isForbidden());
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM saved_route", Integer.class), "CSRF 없는 저장은 건수가 늘지 않아야 한다");
+    }
+
     private JsonNode json(String body) throws Exception { return mapper.readTree(body); }
 }
