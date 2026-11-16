@@ -187,12 +187,14 @@ function loadScript(url){return new Promise((resolve,reject)=>{const script=docu
 async function initMap(){
   const config=await (await fetch('/api/map-config')).json();
   const mapEl=byId('map');
-  let switched=false;
+  let switched=false, failureObserver;
   function vworldFallback(){
     if(switched)return;
     switched=true;
+    failureObserver?.disconnect();
     try{map?.destroy?.();}catch(e){/* SDK failure must not block the secondary map. */}
     map=null;provider=null;markers=[];lines=[];facilityMarkers=[];mapEl.replaceChildren();
+    mapEl.style.removeProperty('background-image');
     if(window.L&&config.vworldKey){
       try{
       provider='vworld';map=L.map('map').setView([37.592,127.089],14);
@@ -220,13 +222,16 @@ async function initMap(){
       if(!switched&&window.naver?.maps){
         provider='naver';map=new naver.maps.Map('map',{center:new naver.maps.LatLng(37.592,127.089),zoom:14});
         naver.maps.Event.addListener(map,'click',e=>mapClicked({lat:e.coord.lat(),lng:e.coord.lng()}));
-        const observer=new MutationObserver(()=>{
-          if(mapEl.textContent.includes('인증에 실패')||mapEl.textContent.includes('API 인증')){
-            observer.disconnect();vworldFallback();
+        // The SDK can replace the map with an authentication-error background image.
+        const checkAuthFailure=()=>{
+          if(/\/auth_fail\.png(?:[?"')]|$)/.test(mapEl.style.backgroundImage)||
+              mapEl.textContent.includes('인증에 실패')||mapEl.textContent.includes('API 인증')){
+            vworldFallback();
           }
-        });
-        observer.observe(mapEl,{childList:true,subtree:true,characterData:true});
-        if(mapEl.textContent.includes('인증에 실패')){observer.disconnect();vworldFallback();}
+        };
+        failureObserver=new MutationObserver(checkAuthFailure);
+        failureObserver.observe(mapEl,{attributes:true,attributeFilter:['style'],childList:true,subtree:true,characterData:true});
+        checkAuthFailure();
       }
     }catch(e){vworldFallback();}
   }else vworldFallback();
