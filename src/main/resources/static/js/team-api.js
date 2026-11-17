@@ -15,7 +15,7 @@ window.TeamApi = {
     if (response.status === 204) return null;
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw Object.assign(new Error(result.error || '요청을 처리하지 못했어요.'), { status: response.status });
+      throw Object.assign(new Error(result.detail || result.error || '요청을 처리하지 못했어요.'), { status: response.status });
     }
     return result;
   }

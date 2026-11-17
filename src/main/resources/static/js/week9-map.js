@@ -8,7 +8,8 @@ const sampleMode=SAMPLE_NAMES.includes(sampleParam)?sampleParam:null;
 const COLORS=['#096c46','#c47a00','#a34081'];
 let candidateList=[], cardEls=[], selectedCandidateId=null, lastLineClick=0;
 let searchSeq=0, searchedPoints=null, saving=false, evidenceById=new Map();
-let replaceRouteId=null, authenticated=false, restoredCandidate=null, guestResult=false;
+const requestedOwner = new URLSearchParams(location.search).get('owner');
+let ownerId = null, replaceRouteId=null, authenticated=false, restoredCandidate=null, guestResult=false;
 if(sampleMode){
   byId('sample-banner').hidden=false;
   byId('route-search').textContent='예시 후보 보기';
@@ -356,7 +357,7 @@ byId('route-search').onclick=()=>findRoutes();
 byId('guest-search').onclick=()=>findRoutes(true);
 byId('confirm-route').onclick=async()=>{
   const button=byId('confirm-route'),nameInput=byId('route-name');
-  if(saving)return;
+  if(saving||requestedOwner&&!ownerId)return;
   if(sampleMode){confirmMessage('예시 자료는 저장할 수 없어요. 실제 후보에서 저장해 주세요.',true);return;}
   if(!selectedCandidateId||!searchedPoints){confirmMessage('저장할 후보를 먼저 선택해 주세요.',true);return;}
   const {start,end}=searchedPoints;
@@ -381,10 +382,10 @@ byId('confirm-route').onclick=async()=>{
   confirmMessage('저장 중이에요.');
   try{
     const token=await csrf();
-    const response=await fetch('/api/routes',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',[token.headerName]:token.token},body:JSON.stringify({start,end,candidateId,name,replaceRouteId,tone})});
+    const response=await fetch('/api/routes',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',[token.headerName]:token.token},body:JSON.stringify({start,end,candidateId,name,replaceRouteId,tone,ownerId})});
     const data=await response.json().catch(()=>({}));
     if(response.status===401){confirmMessage('로그인이 필요합니다. 로그인 화면으로 이동해요.',true);location.assign('/login.html');return;}
-    if(response.status===201&&Number.isInteger(data.id)){location.assign(`/guide.html?id=${encodeURIComponent(data.id)}`);return;}
+    if(response.status===201&&Number.isInteger(data.id)){location.assign(`/guide.html?id=${encodeURIComponent(data.id)}${ownerId ? '&owner=' + ownerId : ''}`);return;}
     const reason=data.error||'저장하지 못했어요.';
     if(response.status===400)confirmMessage(`${reason} 입력한 이름과 선택은 그대로 두었어요.`,true);
     else if(response.status===422)confirmMessage(`${reason} 입력한 이름은 그대로 두었어요.`,true);
@@ -399,9 +400,23 @@ byId('confirm-route').onclick=async()=>{
   }
 };
 (async()=>{try{const me=await (await fetch('/api/auth/me')).json();authenticated=me.authenticated;byId('guest-search').hidden=authenticated||Boolean(sampleMode);byId('user').textContent=me.authenticated?`${me.loginId} 로그인 중`:'로그인이 필요합니다';byId('logout').hidden=!me.authenticated;byId('logout').onclick=async()=>{const t=await csrf();await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin',headers:{[t.headerName]:t.token}});location.reload();};if(me.authenticated)await loadSavedPlaces();
+if(requestedOwner && !sampleMode) {
+  const label=byId('route-owner');
+  label.hidden=false;
+  try {
+    const family=await TeamApi.request('/api/family');
+    const child=family.children.find(person=>String(person.id)===requestedOwner);
+    if(!child)throw new Error('연동된 자녀 계정을 찾을 수 없어요.');
+    ownerId=child.id;
+    label.textContent=child.nickname+' 계정에 저장할 경로를 찾고 있어요.';
+  } catch(error) {
+    label.textContent=error.status===401?'로그인 후 가족 화면에서 자녀를 다시 골라 주세요.':error.message;
+    return;
+  }
+}
 await loadReplacement();
 const data=await (await fetch('/api/facilities/status')).json();byId('data-status').textContent=`횡단보도 ${data.crosswalkCount}건 · ${data.coverage}`;facilitySample=await (await fetch('/api/facilities/sample')).json();await initMap();
-if(authenticated&&!sampleMode&&!replaceRouteId)restoreGuestRoute();
+if(authenticated&&!sampleMode&&!replaceRouteId&&!ownerId)restoreGuestRoute();
 }catch(e){status('초기 화면을 불러오지 못했어요.');}})();
 
 async function loadReplacement(){

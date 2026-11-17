@@ -1,0 +1,11 @@
+.family { max-width: 44rem; margin: 0 auto; }
+.family section { margin-block: 1rem; }
+.family section > h2 { margin-top: 0; }
+.family details { margin-block: .9rem; }
+.family summary { cursor: pointer; font-weight: 650; }
+.family form { margin-block: .6rem; }
+.family form input { max-width: 24rem; }
+.family article { border-bottom: 1px solid #c9ddd2; padding-block: .7rem; }
+.family article h3 { margin: 0 0 .45rem; }
+.family-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+#issued-code { overflow-wrap: anywhere; font-family: monospace; }

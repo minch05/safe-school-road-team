@@ -1,6 +1,7 @@
 package com.safeschoolroad.saved;
 
 import com.safeschoolroad.evidence.EvidenceAnalyzer;
+import com.safeschoolroad.family.FamilyService;
 import com.safeschoolroad.evidence.GeoLine;
 import com.safeschoolroad.evidence.RouteEvidence;
 import com.safeschoolroad.guide.GuideWriter;
@@ -33,15 +34,17 @@ public class SavedRouteApi {
     private final EvidenceAnalyzer analyzer;
     private final SavedRouteStore store;
     private final GuideWriter guide;
+    private final FamilyService family;
 
-    public SavedRouteApi(TmapGateway tmap, EvidenceAnalyzer analyzer, SavedRouteStore store, GuideWriter guide) {
+    public SavedRouteApi(TmapGateway tmap, EvidenceAnalyzer analyzer, SavedRouteStore store, GuideWriter guide, FamilyService family) {
         this.tmap = tmap;
         this.analyzer = analyzer;
         this.store = store;
         this.guide = guide;
+        this.family = family;
     }
 
-    public record SaveRequest(Point start, Point end, String candidateId, String name, Long replaceRouteId, GuideWriter.Tone tone) { }
+    public record SaveRequest(Point start, Point end, String candidateId, String name, Long replaceRouteId, GuideWriter.Tone tone, Long ownerId) { }
 
     @PostMapping("/api/routes") ResponseEntity<?> save(@RequestBody SaveRequest req, Authentication auth) {
         Optional<Long> member = member(auth);
@@ -53,7 +56,15 @@ public class SavedRouteApi {
         if (req.candidateId() == null || !req.candidateId().matches("candidate-(0|4|10)"))
             return error(HttpStatus.BAD_REQUEST, "선택한 후보가 올바르지 않습니다.");
 
-        if (req.replaceRouteId() != null && store.find(member.get(), req.replaceRouteId()).isEmpty()) {
+        long owner = req.ownerId() == null ? member.get() : req.ownerId();
+        if (req.replaceRouteId() != null) {
+            var currentOwner = store.ownerVisibleTo(member.get(), req.replaceRouteId());
+            if (currentOwner.isEmpty() || req.ownerId() != null && req.ownerId() != currentOwner.get().longValue()) {
+                return error(HttpStatus.NOT_FOUND, "경로를 찾을 수 없습니다.");
+            }
+            owner = currentOwner.get();
+        }
+        if (owner != member.get() && !family.linked(member.get(), owner)) {
             return error(HttpStatus.NOT_FOUND, "경로를 찾을 수 없습니다.");
         }
         var built = RouteCandidates.build(tmap, req.start(), req.end());
@@ -72,7 +83,7 @@ public class SavedRouteApi {
         int option = chosen.get().candidate().options().get(0);
         long id;
         try {
-            id = store.replace(member.get(), name, req.start(), req.end(), req.candidateId(), option,
+            id = store.replace(member.get(), owner, name, req.start(), req.end(), req.candidateId(), option,
                     points, written.texts(), written.source(), req.replaceRouteId(), tone, written.attempted());
         } catch (SavedRouteStore.MissingRoute missing) {
             return error(HttpStatus.NOT_FOUND, "경로를 찾을 수 없습니다.");
@@ -90,14 +101,14 @@ public class SavedRouteApi {
     @GetMapping("/api/routes/{id}") ResponseEntity<?> detail(@PathVariable long id, Authentication auth) {
         Optional<Long> member = member(auth);
         if (member.isEmpty()) return error(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
-        return store.find(member.get(), id).<ResponseEntity<?>>map(ResponseEntity::ok)
+        return visibleRoute(member.get(), id).<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> error(HttpStatus.NOT_FOUND, "경로를 찾을 수 없습니다."));
     }
 
     @DeleteMapping("/api/routes/{id}") ResponseEntity<?> delete(@PathVariable long id, Authentication auth) {
         Optional<Long> member = member(auth);
         if (member.isEmpty()) return error(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
-        return store.delete(member.get(), id) ? ResponseEntity.noContent().build()
+        return store.deleteVisible(member.get(), id) ? ResponseEntity.noContent().build()
                 : error(HttpStatus.NOT_FOUND, "경로를 찾을 수 없습니다.");
     }
 
@@ -108,7 +119,7 @@ public class SavedRouteApi {
                                 Authentication auth) {
         Optional<Long> member = member(auth);
         if (member.isEmpty()) return error(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
-        var route = store.find(member.get(), id);
+        var route = visibleRoute(member.get(), id);
         if (route.isEmpty()) return error(HttpStatus.NOT_FOUND, "경로를 찾을 수 없습니다.");
         var point = route.get().points().stream().filter(p -> p.seq() == seq).findFirst();
         if (point.isEmpty()) return error(HttpStatus.NOT_FOUND, "안내 지점을 찾을 수 없습니다.");
@@ -127,7 +138,7 @@ public class SavedRouteApi {
     ResponseEntity<?> check(@PathVariable long id, Authentication auth) {
         Optional<Long> member = member(auth);
         if (member.isEmpty()) return error(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
-        var found = store.find(member.get(), id);
+        var found = visibleRoute(member.get(), id);
         if (found.isEmpty()) return error(HttpStatus.NOT_FOUND, "경로를 찾을 수 없습니다.");
         var route = found.get();
         try {
@@ -144,7 +155,7 @@ public class SavedRouteApi {
     @GetMapping("/api/routes/{id}/line") ResponseEntity<?> line(@PathVariable long id, Authentication auth) {
         Optional<Long> member = member(auth);
         if (member.isEmpty()) return error(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
-        var detail = store.find(member.get(), id);
+        var detail = visibleRoute(member.get(), id);
         if (detail.isEmpty()) return error(HttpStatus.NOT_FOUND, "경로를 찾을 수 없습니다.");
         try {
             var route = tmap.walking(detail.get().start(), detail.get().end(), detail.get().searchOption());
@@ -154,6 +165,10 @@ public class SavedRouteApi {
         } catch (TmapGateway.ProviderUnavailable e) {
             return error(HttpStatus.SERVICE_UNAVAILABLE, "오늘 경로선을 받지 못했어요. 저장한 안내 지점으로 안내해요.");
         }
+    }
+
+    private Optional<SavedRouteStore.Detail> visibleRoute(long viewer, long id) {
+        return store.ownerVisibleTo(viewer, id).flatMap(owner -> store.find(owner, id));
     }
 
     private Optional<Long> member(Authentication auth) {

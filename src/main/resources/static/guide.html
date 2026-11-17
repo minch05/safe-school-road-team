@@ -3,10 +3,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>길 안내 · 통학 안전 안내</title>
+<meta name="theme-color" content="#087d73">
+<link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/css/week9.css">
 <link rel="stylesheet" href="/css/guide.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <main class="guide">
+  <nav><a href="/">지도</a> · <a href="/family.html">가족과 알림</a></nav>
   <h1>길 안내</h1>
   <p id="guide-status" role="status">저장한 경로를 불러오는 중이에요.</p>
 
@@ -24,6 +27,11 @@
     <p id="line-note"></p>
     <button id="start" type="button">안내 시작</button>
     <button id="stop" type="button" hidden>안내 멈추기</button>
+    <div id="family-trip" hidden>
+      <button id="trip-start" type="button">보호자에게 출발 알리기</button>
+      <button id="trip-arrive" type="button" hidden>보호자에게 도착 알리기</button>
+      <p id="trip-status" role="status"></p>
+    </div>
     <button id="check-route" type="button">경로 달라짐 확인</button>
     <p id="change-result" role="status"></p>
     <a id="replace-route" href="/">같은 출발지·도착지로 다시 등록</a>
@@ -35,5 +43,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/js/guide-geo.js"></script>
 <script src="/js/team-api.js"></script>
+<script src="/js/pwa.js"></script>
 <script src="/js/guide.js"></script>
 </html>

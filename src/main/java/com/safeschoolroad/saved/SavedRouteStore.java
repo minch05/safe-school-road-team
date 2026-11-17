@@ -34,6 +34,13 @@ public class SavedRouteStore {
         return jdbc.queryForList("SELECT id FROM member WHERE login_id=?", Long.class, loginId).stream().findFirst();
     }
 
+    public Optional<Long> ownerVisibleTo(long viewer, long route) {
+        return jdbc.queryForList("""
+                SELECT r.member_id FROM saved_route r WHERE r.id=? AND
+                (r.member_id=? OR r.member_id IN (SELECT child_id FROM family_link WHERE guardian_id=?))
+                """, Long.class, route, viewer, viewer).stream().findFirst();
+    }
+
     @Transactional
     public long save(long memberId, String name, Point start, Point end, String candidateId, int searchOption,
                      List<KeyPoint> points, List<String> guideTexts) {
@@ -43,13 +50,18 @@ public class SavedRouteStore {
     @Transactional
     public long save(long memberId, String name, Point start, Point end, String candidateId, int searchOption,
                      List<KeyPoint> points, List<String> guideTexts, String guideSource) {
-        return replace(memberId, name, start, end, candidateId, searchOption, points, guideTexts, guideSource, null, GuideWriter.Tone.LOWER, false);
+        return replace(memberId, memberId, name, start, end, candidateId, searchOption, points, guideTexts, guideSource, null, GuideWriter.Tone.LOWER, false);
     }
 
     @Transactional
-    public long replace(long memberId, String name, Point start, Point end, String candidateId, int searchOption,
+    public long replace(long viewer, long memberId, String name, Point start, Point end, String candidateId, int searchOption,
                         List<KeyPoint> points, List<String> guideTexts, String guideSource, Long replacedId,
                         GuideWriter.Tone tone, boolean attempted) {
+        if (viewer != memberId && (jdbc.queryForList("SELECT id FROM member WHERE id=? FOR UPDATE", Long.class, memberId).isEmpty()
+                || jdbc.queryForList("SELECT child_id FROM family_link WHERE child_id=? AND guardian_id=? FOR UPDATE",
+                        Long.class, memberId, viewer).isEmpty())) {
+            throw new MissingRoute();
+        }
         if (replacedId != null && jdbc.queryForList(
                 "SELECT id FROM saved_route WHERE id=? AND member_id=? FOR UPDATE", Long.class, replacedId, memberId).isEmpty()) {
             throw new MissingRoute();
@@ -93,12 +105,20 @@ public class SavedRouteStore {
         return jdbc.update("DELETE FROM saved_route WHERE id=? AND member_id=?", routeId, memberId) == 1;
     }
 
-    public boolean editGuide(long memberId, long routeId, int seq, String text) {
+    public boolean deleteVisible(long viewer, long routeId) {
+        return jdbc.update("""
+                DELETE FROM saved_route WHERE id=? AND
+                (member_id=? OR member_id IN (SELECT child_id FROM family_link WHERE guardian_id=?))
+                """, routeId, viewer, viewer) == 1;
+    }
+
+    public boolean editGuide(long viewer, long routeId, int seq, String text) {
         return jdbc.update("""
                 UPDATE saved_route_point SET guide_text=?, guide_source='EDITED'
                 WHERE route_id=? AND seq=? AND EXISTS (
-                  SELECT 1 FROM saved_route WHERE id=? AND member_id=?
-                )""", text, routeId, seq, routeId, memberId) == 1;
+                  SELECT 1 FROM saved_route WHERE id=? AND
+                  (member_id=? OR member_id IN (SELECT child_id FROM family_link WHERE guardian_id=?))
+                )""", text, routeId, seq, routeId, viewer, viewer) == 1;
     }
 
     public List<Summary> list(long memberId) {

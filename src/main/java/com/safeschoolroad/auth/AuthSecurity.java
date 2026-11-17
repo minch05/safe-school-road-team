@@ -7,13 +7,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
@@ -22,8 +22,8 @@ public class AuthSecurity {
     @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean UserDetailsService userDetailsService(JdbcTemplate jdbc) {
-        return login -> jdbc.query("SELECT login_id, password_hash FROM member WHERE login_id = ?",
-                (rs, row) -> User.withUsername(rs.getString(1)).password(rs.getString(2)).roles("USER").build(), login)
+        return login -> jdbc.query("SELECT id, login_id, password_hash FROM member WHERE login_id = ?",
+                (rs, row) -> new MemberSession.Principal(rs.getLong(1), rs.getString(2), rs.getString(3)), login)
                 .stream().findFirst().orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
     }
 
@@ -34,11 +34,11 @@ public class AuthSecurity {
     }
 
     @Bean SecurityFilterChain securityFilterChain(HttpSecurity http, JdbcTokenRepositoryImpl tokens,
-            UserDetailsService users, @Value("${app.remember-me-key}") String rememberKey) throws Exception {
+            UserDetailsService users, JdbcTemplate jdbc, @Value("${app.remember-me-key}") String rememberKey) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/index.html", "/login.html", "/signup.html", "/guide.html", "/css/**", "/js/**", "/health/**",
                         "/api/auth/signup", "/api/auth/csrf", "/api/auth/me", "/api/map-config", "/api/places/search",
-                        "/api/facilities/**", "/safety-map.html", "/api/safety-map/**", "/api/guest/candidates").permitAll()
+                        "/api/facilities/**", "/safety-map.html", "/family.html", "/manifest.webmanifest", "/sw.js", "/icons/**", "/api/safety-map/**", "/api/guest/candidates").permitAll()
                 .requestMatchers(HttpMethod.GET, "/samples/candidates-0.json", "/samples/candidates-1.json",
                         "/samples/candidates-2.json", "/samples/candidates-3.json", "/samples/candidates-partial.json").permitAll()
                 .anyRequest().authenticated());
@@ -54,6 +54,7 @@ public class AuthSecurity {
                 .failureHandler((request, response, exception) -> response.sendError(401, "로그인에 실패했습니다")));
         http.rememberMe(remember -> remember.key(rememberKey).tokenRepository(tokens)
                 .userDetailsService(users).rememberMeParameter("remember-me").tokenValiditySeconds(7 * 24 * 60 * 60));
+        http.addFilterBefore(new MemberSession(jdbc), LogoutFilter.class);
         http.logout(logout -> logout.logoutUrl("/api/auth/logout")
                 .deleteCookies("JSESSIONID", "remember-me")
                 .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204)));
