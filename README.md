@@ -4,12 +4,17 @@ Java 21 · Spring Boot 3.5.6 · Gradle 8.14.3. 가입·로그인, 실제 TMAP �
 
 ## 실행 위치
 
-| 앱 | 작업 폴더 | 로컬 주소 | 시험 DB |
-|---|---|---|---|
-| 팀 앱 · 11주차 Must | 저장소 루트 | `http://localhost:8081` | 기본 H2 또는 루트 Compose MySQL `127.0.0.1:3309` |
-| Should·Could 앱 | [apps/should-could](apps/should-could/README.md) | `http://127.0.0.1:8080` | 별도 Compose MySQL `127.0.0.1:3308` |
+저장소 루트에서 팀 앱을 실행합니다. 기본 주소는 `http://localhost:8081`이며 개발용 H2 또는 팀 MySQL을 사용합니다. 루트 Compose의 MySQL 포트는 3309입니다. 분리 앱의 이전 구현은 [통합 전 소스](https://github.com/minch05/safe-school-road-team/tree/8a5fe927427195d438d2d5edb7eda1d5f7fa1ff4/apps/should-could)에서 확인할 수 있습니다.
 
-두 앱의 서버와 DB는 별도로 실행합니다. 각 작업 폴더에 해당 앱의 `.env`를 두세요. 브라우저에서 두 앱을 동시에 시험할 때는 표의 주소대로 열면 세션 쿠키가 겹치지 않습니다.
+## 팀 앱에 연결한 추가 기능
+
+- 출발·도착 핀을 끌어 위치를 바꿀 수 있습니다. 위치가 바뀌면 이전 후보가 지워지고 새 후보를 조회할 수 있습니다.
+- 내 장소의 이름과 좌표를 저장해 출발지나 도착지로 다시 사용합니다. 저장한 경로 상세에서 같은 장소로 다시 등록하거나 삭제할 수 있습니다.
+- 동네 안전지도에서 시설·사고 영역을 조회합니다. 범죄주의구간 원본 이미지를 보려면 `SAFEMAP_API_KEY`가 필요합니다.
+- 비회원 미리보기는 같은 브라우저에서 하루 3회 제공하며, 같은 탭에서 로그인하면 고른 경로를 이어받습니다.
+- 기존 계정·저장 경로 테이블은 같은 이름과 형식을 사용합니다. 번호가 붙은 초기화 SQL로 장소, 조회 횟수, 안내 기록, 가족 관계와 알림 테이블을 추가합니다.
+- **가족과 알림**에서 아이 계정을 만들거나 기존 계정을 초대할 수 있습니다. 보호자는 연동된 자녀의 경로를 등록합니다. 자녀가 자신의 저장 경로에서 출발·도착을 기록하면 보호자의 구독 기기에 알림을 보냅니다.
+- 브라우저의 홈 화면 설치 기능을 사용할 수 있습니다. **가족과 알림**의 설치·권한 안내를 확인한 뒤 각 기기에서 알림을 켜고 시험 알림을 보내세요. 웹 푸시에는 HTTPS와 `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`가 필요합니다.
 
 ## 팀 앱 빠른 실행
 
@@ -35,7 +40,9 @@ Java 21 · Spring Boot 3.5.6 · Gradle 8.14.3. 가입·로그인, 실제 TMAP �
 | 후보 | `POST /api/routes/candidates` | JSON `{start:{lat,lng},end:{lat,lng}}`; 로그인/CSRF 필요; `candidateId,distanceM,durationSec,line` |
 | 후보 근거 | `POST /api/routes/evidence` | `start,end`로 후보별 공공자료 근거 조회 |
 | 저장 | `POST /api/routes` | `start,end,candidateId,name`; 201의 `id`·`guideSource` 사용 |
-| 저장 경로 | `GET /api/routes`, `/{id}`, `/{id}/line` | 본인 경로만 조회, 다른 계정 404, 오늘 경로선 재요청 |
+| 저장 경로 | `GET /api/routes`, `/{id}`, `/{id}/line` | 본인 또는 연동 자녀 경로 조회, 다른 계정 404, 오늘 경로선 재요청 |
+| 가족 | `GET /api/family`, `POST /api/family/children`, `POST /api/invite/issue·preview·redeem` | 자녀 계정과 초대 관리 |
+| 출발·도착 | `POST /api/trips/start`, `POST /api/trips/{id}/arrive` | 연동 자녀의 본인 경로, 중복 요청 방지 |
 | 자료 현황 | `GET /api/facilities/status`, `/sample` | 적재된 횡단보도 건수·범위와 중랑구 일부 미리보기 |
 | 상태 | `GET /health/setup` | 서버 기동 여부. DB 접속과 외부 API 성공을 보증하지 않음 |
 
@@ -53,7 +60,7 @@ TMAP 옵션 0·4·10을 요청하고 **전체 경로선이 동일할 때만** �
 
 ## Git·Jira
 
-.env와 DB 설정은 각 앱의 실행 폴더에서 관리합니다. `.env`, 키, 개발 DB, TMAP 캐시 응답, 사용자 위치는 Git에 올리지 않습니다.
+`.env`와 DB 설정은 팀 앱의 실행 폴더에서 관리합니다. `.env`, 키, 개발 DB, TMAP 캐시 응답, 사용자 위치는 Git에 올리지 않습니다.
 
 ## AI 안내문과 HTTPS 운영 설정
 

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>동네 안전지도</title>
+<link rel="stylesheet" href="/css/week9.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<main>
+  <a href="/">경로 찾기</a>
+  <h1>동네 안전지도</h1>
+  <div id="map" aria-label="시설과 사고 영역 지도"></div>
+  <p><button id="map-load" type="button">이 지도에서 시설·사고 조회</button>
+  <button id="map-crime" type="button" aria-pressed="false">범죄주의구간 보기</button></p>
+  <p id="map-message" role="status"></p>
+  <p class="hint">사고 영역은 과거 한국도로교통공단 자료입니다. 범죄 레이어 출처는 생활안전지도·경찰청입니다. 표시가 없어도 안전하다는 뜻은 아니에요.</p>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/safety-map.js"></script>
+</html>

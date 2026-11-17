@@ -7,7 +7,9 @@ const sampleParam=new URLSearchParams(location.search).get('sample');
 const sampleMode=SAMPLE_NAMES.includes(sampleParam)?sampleParam:null;
 const COLORS=['#096c46','#c47a00','#a34081'];
 let candidateList=[], cardEls=[], selectedCandidateId=null, lastLineClick=0;
-let searchSeq=0, searchedPoints=null, saving=false;
+let searchSeq=0, searchedPoints=null, saving=false, evidenceById=new Map();
+const requestedOwner = new URLSearchParams(location.search).get('owner');
+let ownerId = null, replaceRouteId=null, authenticated=false, restoredCandidate=null, guestResult=false;
 if(sampleMode){
   byId('sample-banner').hidden=false;
   byId('route-search').textContent='예시 후보 보기';
@@ -26,7 +28,35 @@ function setPoint(which,p){
   drawMarkers();
 }
 function clearLayers(){for(const layer of [...markers,...lines]){if(provider==='naver')layer.setMap(null);else map.removeLayer(layer);}markers=[];lines=[];}
-function drawMarkers(){if(!map)return;for(const m of markers){if(provider==='naver')m.setMap(null);else map.removeLayer(m);}markers=[];for(const [name,p] of Object.entries({start:point('start'),end:point('end')})){if(!valid(p))continue;markers.push(provider==='naver'?new naver.maps.Marker({position:new naver.maps.LatLng(p.lat,p.lng),map,title:name==='start'?'출발':'도착'}):L.marker([p.lat,p.lng]).addTo(map).bindPopup(name==='start'?'출발':'도착'));}}
+function drawMarkers(){
+  if(!map)return;
+  for(const marker of markers){
+    if(provider==='naver')marker.setMap(null);
+    else map.removeLayer(marker);
+  }
+  markers=[];
+  for(const which of ['start','end']){
+    const p=point(which);
+    if(!valid(p))continue;
+    const title=which==='start'?'출발지':'도착지';
+    if(provider==='naver'){
+      const marker=new naver.maps.Marker({position:new naver.maps.LatLng(p.lat,p.lng),map,title,draggable:true});
+      naver.maps.Event.addListener(marker,'dragend',()=>{
+        const next=marker.getPosition();
+        setPoint(which,{lat:next.lat(),lng:next.lng()});
+        drawMarkers();
+      });
+      markers.push(marker);
+    }else{
+      const marker=L.marker([p.lat,p.lng],{draggable:true,title}).addTo(map).bindPopup(title);
+      marker.on('dragend',()=>{
+        setPoint(which,marker.getLatLng());
+        drawMarkers();
+      });
+      markers.push(marker);
+    }
+  }
+}
 function drawFacilities(){
   if(!map)return;
   for(const marker of facilityMarkers){if(provider==='naver')marker.setMap(null);else map.removeLayer(marker);}
@@ -56,8 +86,13 @@ function resetCandidates(){
   byId('selected-id').textContent='';
   byId('confirm-route').hidden=true;
   byId('route-name-label').hidden=true;
+  byId('guide-tone-label').hidden=true;
   confirmMessage('');
+  byId('confirm-route').textContent='경로 확정·저장';
+  guestResult=false;
   searchedPoints=null;
+  evidenceById.clear();
+  byId('comparison-summary').textContent='';
 }
 function confirmMessage(text,isError){
   const box=byId('confirm-message');
@@ -82,6 +117,7 @@ function selectCandidate(id){
     }
   });
   byId('selected-id').textContent=`선택한 후보: ${id}`;
+  renderComparison();
 }
 function drawRoutes(candidates){
   if(!map)return;
@@ -127,7 +163,9 @@ function renderCandidates(list){
     box.append(card);cardEls.push(card);
   });
   byId('confirm-route').hidden=false;
-  byId('route-name-label').hidden=false;
+  byId('route-name-label').hidden=guestResult;
+  byId('guide-tone-label').hidden=guestResult;
+  if(guestResult)byId('confirm-route').textContent='로그인하고 이어서 저장';
 }
 function evidenceText(card,text){
   const body=card.querySelector('.evidence-body');
@@ -163,12 +201,28 @@ async function loadEvidence(seq,start,end){
     const data=await response.json().catch(()=>({}));
     if(seq!==searchSeq)return;
     if(!response.ok)throw new Error(data.error||'근거를 확인하지 못했어요.');
-    const byCandidate=new Map((Array.isArray(data.evidence)?data.evidence:[]).map(item=>[item.candidateId,item]));
-    for(const card of cardEls)renderEvidence(card,byCandidate.get(card.dataset.candidateId));
+    evidenceById=new Map((Array.isArray(data.evidence)?data.evidence:[]).map(item=>[item.candidateId,item]));
+    for(const card of cardEls)renderEvidence(card,evidenceById.get(card.dataset.candidateId));
+    renderComparison();
   }catch(e){
     if(seq!==searchSeq)return;
     for(const card of cardEls)evidenceText(card,'근거를 확인하지 못했어요 · 확인 안 됨');
   }
+}
+function renderComparison(){
+  const node=byId('comparison-summary');
+  const chosen=candidateList.find(candidate=>candidate.candidateId===selectedCandidateId);
+  if(!chosen){node.textContent='';return;}
+  const delta=(value,unit)=>value===0?'같음':`${Math.abs(value)}${unit} ${value>0?'많음':'적음'}`;
+  node.textContent=candidateList.filter(c=>c!==chosen).map(c=>{
+    const facts=[`거리 ${delta(c.distanceM-chosen.distanceM,'m')}`,
+      `예상 시간 ${delta(c.durationSec-chosen.durationSec,'초')}`];
+    const a=evidenceById.get(chosen.candidateId),b=evidenceById.get(c.candidateId);
+    if(a?.crossings&&b?.crossings){
+      facts.push(`건넘 ${delta(b.crossings.count-a.crossings.count,'곳')}`);
+    }
+    return `${chosen.label} 후보 대비 ${c.label} 후보는 ${facts.join(', ')}.`;
+  }).join(' ') || '비교할 다른 후보가 없어요.';
 }
 function samePoint(a,b){return a.lat===b.lat&&a.lng===b.lng;}
 function invalidateCandidates(){
@@ -182,17 +236,19 @@ for(const input of coordinateInputs)input.addEventListener('input',()=>{
   invalidateCandidates();
   drawMarkers();
 });
-function valid(p){return Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&p.lat>=37.41&&p.lat<=37.72&&p.lng>=126.76&&p.lng<=127.19;}
+function valid(p){return Number.isFinite(p?.lat)&&Number.isFinite(p?.lng)&&p.lat>=37.41&&p.lat<=37.72&&p.lng>=126.76&&p.lng<=127.19;}
 function loadScript(url){return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=url;script.onload=resolve;script.onerror=reject;document.head.append(script);});}
 async function initMap(){
   const config=await (await fetch('/api/map-config')).json();
   const mapEl=byId('map');
-  let switched=false;
+  let switched=false, failureObserver;
   function vworldFallback(){
     if(switched)return;
     switched=true;
+    failureObserver?.disconnect();
     try{map?.destroy?.();}catch(e){/* SDK failure must not block the secondary map. */}
     map=null;provider=null;markers=[];lines=[];facilityMarkers=[];mapEl.replaceChildren();
+    mapEl.style.removeProperty('background-image');
     if(window.L&&config.vworldKey){
       try{
       provider='vworld';map=L.map('map').setView([37.592,127.089],14);
@@ -220,13 +276,16 @@ async function initMap(){
       if(!switched&&window.naver?.maps){
         provider='naver';map=new naver.maps.Map('map',{center:new naver.maps.LatLng(37.592,127.089),zoom:14});
         naver.maps.Event.addListener(map,'click',e=>mapClicked({lat:e.coord.lat(),lng:e.coord.lng()}));
-        const observer=new MutationObserver(()=>{
-          if(mapEl.textContent.includes('인증에 실패')||mapEl.textContent.includes('API 인증')){
-            observer.disconnect();vworldFallback();
+        // The SDK can replace the map with an authentication-error background image.
+        const checkAuthFailure=()=>{
+          if(/\/auth_fail\.png(?:[?"')]|$)/.test(mapEl.style.backgroundImage)||
+              mapEl.textContent.includes('인증에 실패')||mapEl.textContent.includes('API 인증')){
+            vworldFallback();
           }
-        });
-        observer.observe(mapEl,{childList:true,subtree:true,characterData:true});
-        if(mapEl.textContent.includes('인증에 실패')){observer.disconnect();vworldFallback();}
+        };
+        failureObserver=new MutationObserver(checkAuthFailure);
+        failureObserver.observe(mapEl,{attributes:true,attributeFilter:['style'],childList:true,subtree:true,characterData:true});
+        checkAuthFailure();
       }
     }catch(e){vworldFallback();}
   }else vworldFallback();
@@ -238,12 +297,12 @@ async function initMap(){
 async function csrf(){const r=await fetch('/api/auth/csrf',{credentials:'same-origin'});if(!r.ok)throw new Error('보안 토큰을 확인하지 못했어요.');return r.json();}
 async function search(which){const query=byId(`${which}-query`).value.trim(),box=byId(`${which}-results`),seq=++currentSearch;box.replaceChildren();if(query.length<2){status('검색어를 두 글자 이상 입력해 주세요.');return;}try{const response=await fetch(`/api/places/search?q=${encodeURIComponent(query)}`);const data=await response.json();if(seq!==currentSearch)return;if(!response.ok)throw new Error(data.error||'검색에 실패했어요.');if(!data.length){status('검색 결과가 없어요. 지도에서 직접 선택해 주세요.');return;}for(const item of data){const b=document.createElement('button');b.type='button';b.textContent=`${item.name||item.address} · ${item.provider}`;b.onclick=()=>{setPoint(which,item);box.replaceChildren();if(map){provider==='naver'?map.panTo(new naver.maps.LatLng(item.lat,item.lng)):map.panTo([item.lat,item.lng]);}};box.append(b);}}catch(e){status(e.message);}}
 byId('start-search').onclick=()=>search('start');byId('end-search').onclick=()=>search('end');
-byId('route-search').onclick=async()=>{
+async function findRoutes(guest=false){
   if(saving)return;
   const start=point('start'),end=point('end');
   if(!valid(start)||!valid(end)||JSON.stringify(start)===JSON.stringify(end)){status('서울 범위의 서로 다른 두 지점을 입력해 주세요.');return;}
   const button=byId('route-search');
-  button.disabled=true;
+  button.disabled=byId('guest-search').disabled=true;
   resetCandidates();
   const seq=++searchSeq;
   status(sampleMode?'예시 후보를 불러오는 중이에요. (실제 경로 아님)':'실제 보행 경로를 요청 중이에요.');
@@ -255,7 +314,7 @@ byId('route-search').onclick=async()=>{
       data=await response.json();
     }else{
       const token=await csrf();
-      response=await fetch('/api/routes/candidates',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',[token.headerName]:token.token},body:JSON.stringify({start,end})});
+      response=await fetch(guest?'/api/guest/candidates':'/api/routes/candidates',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',[token.headerName]:token.token},body:JSON.stringify({start,end})});
       if(seq!==searchSeq)return;
       if (response.status === 401) {
         status('로그인이 필요합니다.');
@@ -271,22 +330,34 @@ byId('route-search').onclick=async()=>{
     const warnings=data.warnings||[];
     if(!list.length){showWarnings(warnings);status('표시할 후보 경로가 없어요.');return;}
     candidateList=list;
+    guestResult=guest;
     searchedPoints={start,end};
     drawRoutes(list);
     renderCandidates(list);
-    selectCandidate(list[0].candidateId);
-    if(!sampleMode)loadEvidence(seq,start,end);
+    const restored=list.find(c=>c.candidateId===restoredCandidate);
+    selectCandidate((restored||list[0]).candidateId);
+    const missingRestored=Boolean(restoredCandidate&&!restored);
+    restoredCandidate=null;
+    if(guest){
+      evidenceById=new Map((data.evidence||[]).map(item=>[item.candidateId,item]));
+      for(const card of cardEls)renderEvidence(card,evidenceById.get(card.dataset.candidateId));
+      renderComparison();
+    }else if(!sampleMode)loadEvidence(seq,start,end);
     showWarnings(warnings);
+    if(guest){status(`후보 ${list.length}개 · 오늘 남은 미리 보기 ${data.left}회`);return;}
+    if(missingRestored){status('전에 고른 후보가 없어 새 후보를 보여 줘요. 다시 선택해 주세요.');return;}
     status(warnings.length?'일부 탐색 옵션은 실패했어요. 확인된 후보만 표시합니다.':sampleMode?`${list.length}개 예시 후보를 표시했어요. 실제 경로가 아니에요.`:`${list.length}개 실제 후보를 받았어요.`);
   }catch(e){
     if(seq!==searchSeq)return;
     status(e.message);
-    if(!sampleMode&&e.message.includes('로그인'))location.assign('/login.html');
-  }finally{button.disabled=false;}
-};
+    if(!guest&&!sampleMode&&e.message.includes('로그인'))location.assign('/login.html');
+  }finally{button.disabled=byId('guest-search').disabled=false;}
+}
+byId('route-search').onclick=()=>findRoutes();
+byId('guest-search').onclick=()=>findRoutes(true);
 byId('confirm-route').onclick=async()=>{
   const button=byId('confirm-route'),nameInput=byId('route-name');
-  if(saving)return;
+  if(saving||requestedOwner&&!ownerId)return;
   if(sampleMode){confirmMessage('예시 자료는 저장할 수 없어요. 실제 후보에서 저장해 주세요.',true);return;}
   if(!selectedCandidateId||!searchedPoints){confirmMessage('저장할 후보를 먼저 선택해 주세요.',true);return;}
   const {start,end}=searchedPoints;
@@ -294,7 +365,16 @@ byId('confirm-route').onclick=async()=>{
     invalidateCandidates();return;
   }
   const candidateId=selectedCandidateId;
+  if(guestResult){
+    try{
+      sessionStorage.setItem('team-guest-route',JSON.stringify({start,end,candidateId,at:Date.now()}));
+      location.assign('/login.html');
+    }catch(error){confirmMessage('경로를 이어받을 수 없어요. 브라우저 저장 설정을 확인해 주세요.',true);}
+    return;
+  }
+
   const name=nameInput.value.trim();
+  const tone=byId('guide-tone').value;
   if(!name||name.length>30){confirmMessage('경로 이름을 1~30자로 입력해 주세요.',true);nameInput.focus();return;}
   saving=true;
   button.disabled=byId('route-search').disabled=true;
@@ -302,10 +382,10 @@ byId('confirm-route').onclick=async()=>{
   confirmMessage('저장 중이에요.');
   try{
     const token=await csrf();
-    const response=await fetch('/api/routes',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',[token.headerName]:token.token},body:JSON.stringify({start,end,candidateId,name})});
+    const response=await fetch('/api/routes',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json',[token.headerName]:token.token},body:JSON.stringify({start,end,candidateId,name,replaceRouteId,tone,ownerId})});
     const data=await response.json().catch(()=>({}));
     if(response.status===401){confirmMessage('로그인이 필요합니다. 로그인 화면으로 이동해요.',true);location.assign('/login.html');return;}
-    if(response.status===201&&Number.isInteger(data.id)){location.assign(`/guide.html?id=${encodeURIComponent(data.id)}`);return;}
+    if(response.status===201&&Number.isInteger(data.id)){location.assign(`/guide.html?id=${encodeURIComponent(data.id)}${ownerId ? '&owner=' + ownerId : ''}`);return;}
     const reason=data.error||'저장하지 못했어요.';
     if(response.status===400)confirmMessage(`${reason} 입력한 이름과 선택은 그대로 두었어요.`,true);
     else if(response.status===422)confirmMessage(`${reason} 입력한 이름은 그대로 두었어요.`,true);
@@ -319,4 +399,83 @@ byId('confirm-route').onclick=async()=>{
     for(const input of coordinateInputs)input.disabled=false;
   }
 };
-(async()=>{try{const me=await (await fetch('/api/auth/me')).json();byId('user').textContent=me.authenticated?`${me.loginId} 로그인 중`:'로그인이 필요합니다';byId('logout').hidden=!me.authenticated;byId('logout').onclick=async()=>{const t=await csrf();await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin',headers:{[t.headerName]:t.token}});location.reload();};const data=await (await fetch('/api/facilities/status')).json();byId('data-status').textContent=`횡단보도 ${data.crosswalkCount}건 · ${data.coverage}`;facilitySample=await (await fetch('/api/facilities/sample')).json();await initMap();}catch(e){status('초기 화면을 불러오지 못했어요.');}})();
+(async()=>{try{const me=await (await fetch('/api/auth/me')).json();authenticated=me.authenticated;byId('guest-search').hidden=authenticated||Boolean(sampleMode);byId('user').textContent=me.authenticated?`${me.loginId} 로그인 중`:'로그인이 필요합니다';byId('logout').hidden=!me.authenticated;byId('logout').onclick=async()=>{const t=await csrf();await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin',headers:{[t.headerName]:t.token}});location.reload();};if(me.authenticated)await loadSavedPlaces();
+if(requestedOwner && !sampleMode) {
+  const label=byId('route-owner');
+  label.hidden=false;
+  try {
+    const family=await TeamApi.request('/api/family');
+    const child=family.children.find(person=>String(person.id)===requestedOwner);
+    if(!child)throw new Error('연동된 자녀 계정을 찾을 수 없어요.');
+    ownerId=child.id;
+    label.textContent=child.nickname+' 계정에 저장할 경로를 찾고 있어요.';
+  } catch(error) {
+    label.textContent=error.status===401?'로그인 후 가족 화면에서 자녀를 다시 골라 주세요.':error.message;
+    return;
+  }
+}
+await loadReplacement();
+const data=await (await fetch('/api/facilities/status')).json();byId('data-status').textContent=`횡단보도 ${data.crosswalkCount}건 · ${data.coverage}`;facilitySample=await (await fetch('/api/facilities/sample')).json();await initMap();
+if(authenticated&&!sampleMode&&!replaceRouteId&&!ownerId)restoreGuestRoute();
+}catch(e){status('초기 화면을 불러오지 못했어요.');}})();
+
+async function loadReplacement(){
+  const id=new URLSearchParams(location.search).get('replace');
+  if(!id||sampleMode)return;
+  try{
+    const route=await TeamApi.request('/api/routes/'+encodeURIComponent(id));
+    replaceRouteId=route.id;
+    setPoint('start',route.start);
+    setPoint('end',route.end);
+    byId('route-name').value=route.name;
+    status('기존 출발지와 도착지를 불러왔어요. 새로 저장할 때 기존 경로를 바꿔요.');
+  }catch(error){
+    if(error.status===401){location.assign('/login.html');return;}
+    status('다시 등록할 경로를 불러오지 못했어요. 새 경로로 등록할 수 있어요.');
+  }
+}
+
+async function loadSavedPlaces(){
+  const select=byId('place-selection'), panel=byId('saved-places'), message=byId('place-status');
+  let places=[];
+  const selectedPlace=()=>places.find(place=>String(place.id)===select.value);
+  async function reload(){
+    places=await TeamApi.request('/api/places/mine');
+    select.replaceChildren(...places.map(place=>new Option(place.name,String(place.id))));
+    for(const id of ['place-as-start','place-as-end','delete-place'])byId(id).disabled=!places.length;
+  }
+  async function act(action){
+    try{await action();}
+    catch(error){message.textContent=error.message;}
+  }
+  for(const which of ['start','end']){
+    byId('place-as-'+which).onclick=()=>{const place=selectedPlace();if(place)setPoint(which,place);};
+    byId('save-'+which+'-place').onclick=()=>act(async()=>{
+      const name=byId('place-name').value.trim();
+      await TeamApi.request('/api/places/mine','POST',{name,point:point(which)});
+      byId('place-name').value='';
+      await reload();message.textContent='장소를 저장했어요.';
+    });
+  }
+  byId('delete-place').onclick=()=>act(async()=>{
+    const place=selectedPlace();
+    if(!place)return;
+    await TeamApi.request('/api/places/mine/'+place.id,'DELETE');
+    await reload();message.textContent='장소를 삭제했어요.';
+  });
+  panel.hidden=false;
+  await act(reload);
+}
+
+function restoreGuestRoute(){
+  try{
+    const raw=sessionStorage.getItem('team-guest-route');
+    sessionStorage.removeItem('team-guest-route');
+    const draft=raw?JSON.parse(raw):null;
+    if(!draft || Date.now()-draft.at<0 || Date.now()-draft.at>600000 || !valid(draft.start) || !valid(draft.end))return;
+    setPoint('start',draft.start);
+    setPoint('end',draft.end);
+    restoredCandidate=draft.candidateId;
+    findRoutes();
+  }catch(error){status('이전 후보를 이어받지 못했어요. 출발지와 도착지를 다시 골라 주세요.');}
+}

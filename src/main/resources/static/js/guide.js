@@ -1,6 +1,7 @@
 // 길 안내 화면 뼈대 (RGN6-127 보조자료). API: GET /api/routes, GET /api/routes/{id}, GET /api/routes/{id}/line
 // 위치·거리 판정은 guide-geo.js(GuideGeo)에 있다. 화면은 상태만 받아서 글자를 바꾼다.
 (function () {
+  const owner = new URLSearchParams(location.search).get('owner');
   const $ = id => document.getElementById(id);
   let route = null, prepared = null, passed = new Set(), watchId = null;
   let guideMap, guideLayers, locationMarker;
@@ -47,6 +48,7 @@
   async function showList() {
     stop();
     $('route-guide').hidden = true;
+    $('family-trip').hidden = true;
     const { routes } = await getJson('/api/routes');
     const ul = $('routes');
     ul.replaceChildren();
@@ -68,12 +70,20 @@
     route = await getJson(`/api/routes/${id}`);
     passed = new Set();
     $('route-name').textContent = route.name;
+    $('change-result').textContent = '';
+    $('replace-route').href = '/?replace=' + encodeURIComponent(route.id) + (owner ? '&owner=' + encodeURIComponent(owner) : '');
     const ol = $('points');
     ol.replaceChildren();
     for (const p of route.points) {
       const li = document.createElement('li');
       li.id = `point-${p.seq}`;
-      li.textContent = p.guideText;
+      const text = document.createElement('span');
+      text.textContent = p.guideText;
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.textContent = '고치기';
+      edit.onclick = () => editGuide(id, p, text, edit);
+      li.append(text, ' ', edit);
       ol.append(li);
     }
     let line = null;
@@ -93,6 +103,52 @@
     catch (e) { $('guide-map').hidden = true; }
     $('now').textContent = route.points[0].guideText;
     status('안내 시작을 누르면 위치에 따라 안내가 바뀌어요.');
+    setupTrip(id);
+  }
+
+  async function setupTrip(routeId) {
+    const panel = $('family-trip');
+    panel.hidden = true;
+    if (owner || !window.crypto?.randomUUID) return;
+    const family = await TeamApi.request('/api/family').catch(() => null);
+    if (!family?.guardian || route?.id !== Number(routeId)) return;
+    const key = 'team-trip:' + family.memberId + ':' + routeId;
+    const start = $('trip-start'), arrive = $('trip-arrive'), message = $('trip-status');
+    let trip;
+    try { trip = JSON.parse(sessionStorage.getItem(key)); } catch (error) { /* Session storage is optional. */ }
+    const remember = () => {
+      try { sessionStorage.setItem(key, JSON.stringify(trip)); } catch (error) { /* Retry remains available in this page. */ }
+    };
+    start.hidden = Boolean(trip?.id);
+    arrive.hidden = !trip?.id;
+    message.textContent = trip?.id ? '출발을 기록했어요.' : '';
+    start.onclick = async () => {
+      start.disabled = true;
+      try {
+        trip ||= { requestId: crypto.randomUUID() };
+        remember();
+        const result = await TeamApi.request('/api/trips/start', 'POST', { routeId: Number(routeId), requestId: trip.requestId });
+        trip.id = result.tripId;
+        remember();
+        start.hidden = true;
+        arrive.hidden = false;
+        message.textContent = '출발을 기록했어요.';
+      } catch (error) { message.textContent = error.message; }
+      finally { start.disabled = false; }
+    };
+    arrive.onclick = async () => {
+      arrive.disabled = true;
+      try {
+        await TeamApi.request('/api/trips/' + trip.id + '/arrive', 'POST');
+        trip = null;
+        remember();
+        arrive.hidden = true;
+        start.hidden = false;
+        message.textContent = '도착을 기록했어요.';
+      } catch (error) { message.textContent = error.message; }
+      finally { arrive.disabled = false; }
+    };
+    panel.hidden = false;
   }
 
   function clearLocationMarker() {
@@ -153,7 +209,50 @@
 
   $('start').onclick = start;
   $('stop').onclick = () => { stop(); status('안내를 멈췄어요.'); };
-  $('back').onclick = () => showList().catch(e => status(e.message));
+  async function editGuide(id, point, label, button) {
+    const text = window.prompt('이 지점의 안내문', point.guideText);
+    if (text === null) return;
+    button.disabled = true;
+    try {
+      await TeamApi.request(`/api/routes/${id}/points/${point.seq}/guide`, 'POST', { text });
+      point.guideText = label.textContent = text.trim();
+      status('안내문을 저장했어요. 다음 안내부터 변경한 문장을 사용해요.');
+    } catch (error) {
+      status(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  $('check-route').onclick = async () => {
+    if (!route) return;
+    const button = $('check-route'), result = $('change-result'), routeId = route.id;
+    button.disabled = true;
+    try {
+      const checked = await TeamApi.request('/api/routes/' + routeId + '/check', 'POST');
+      if (route?.id === routeId) result.textContent = checked.changed
+        ? `저장 지점 ${checked.distantPoints}곳이 오늘 경로에서 멀어요. 필요하면 다시 등록하세요.`
+        : '저장 지점에서 크게 벗어난 곳이 없어요. 공사·통제나 현장 안전을 확인한 결과는 아니에요.';
+    } catch (error) {
+      if (route?.id === routeId) result.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  };
+  $('delete-route').onclick = async () => {
+    if (!route || !window.confirm('이 경로를 삭제할까요?')) return;
+    const button = $('delete-route');
+    button.disabled = true;
+    try {
+      await TeamApi.request('/api/routes/' + route.id, 'DELETE');
+      await showList();
+    } catch (error) {
+      status(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  };
+  $('back').onclick = () => owner ? location.assign('/family.html') : showList().catch(e => status(e.message));
 
   const id = new URLSearchParams(location.search).get('id');
   (id ? open(id) : showList()).catch(e => status(e.status === 404 ? '경로를 찾을 수 없어요.' : e.message));
